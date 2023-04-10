@@ -1,1 +1,1 @@
-from .graph import ActivityPubGraph
+from .graph import ActivityPubGraph, get_graph
