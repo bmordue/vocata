@@ -3,7 +3,7 @@ import json
 import rdflib
 from pyld import jsonld
 
-from .util import jsonld_single
+from .util import jsonld_single, jsonld_cleanup_ids
 
 
 class ActivityPubGraph(rdflib.Graph):
@@ -46,6 +46,6 @@ class ActivityPubGraph(rdflib.Graph):
 
     def get_single_activitystream(self, uri: str) -> dict:
         doc = self.filter_subject(rdflib.URIRef(uri)).to_activitystreams()
-        single = jsonld_single(doc, uri)
+        single = jsonld_cleanup_ids(jsonld_single(doc, uri))
 
         return single
