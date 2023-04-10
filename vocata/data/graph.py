@@ -8,7 +8,10 @@ from .util import jsonld_single, jsonld_cleanup_ids
 
 class ActivityPubGraph(rdflib.Graph):
     def filter_subject(
-        self, subject: rdflib.IdentifiedNode, recurse_bnodes: bool = True, recurse_uris: bool = False
+        self,
+        subject: rdflib.IdentifiedNode,
+        recurse_bnodes: bool = True,
+        recurse_uris: bool = False,
     ) -> "ActivityPubGraph":
         to_deref = {subject}
         seen = set()
