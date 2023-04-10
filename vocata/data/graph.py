@@ -8,7 +8,7 @@ from .util import jsonld_single
 
 class ActivityPubGraph(rdflib.Graph):
     def filter_subject(
-        self, subject: rdflib.IdentifiedNode, recursive: bool = True
+        self, subject: rdflib.IdentifiedNode, recurse_bnodes: bool = True, recurse_uris: bool = False
     ) -> "ActivityPubGraph":
         to_deref = {subject}
         seen = set()
@@ -21,7 +21,15 @@ class ActivityPubGraph(rdflib.Graph):
             for s, p, o in self.triples((node, None, None)):
                 new_g.add((s, p, o))
 
-                if isinstance(o, rdflib.IdentifiedNode) and o not in seen:
+                if o in seen:
+                    continue
+                if recurse_bnodes and isinstance(o, rdflib.BNode):
+                    to_deref.add(o)
+                elif not recurse_uris:
+                    continue
+                elif recurse_uris is True and isinstance(o, rdflib.URIRef):
+                    to_deref.add(o)
+                elif p in recurse_uris and isinstance(o, rdflib.URIRef):
                     to_deref.add(o)
 
         return new_g
@@ -36,7 +44,7 @@ class ActivityPubGraph(rdflib.Graph):
 
         return compacted
 
-    def get_single_jsonld(self, uri: str) -> dict:
+    def get_single_activitystream(self, uri: str) -> dict:
         doc = self.filter_subject(rdflib.URIRef(uri)).to_activitystreams()
         single = jsonld_single(doc, uri)
 
