@@ -11,6 +11,8 @@ keywords = ["activitypub", "fediverse"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+rdflib = "^6.3.2"
+pyld = "^2.0.3"
 
 
 [build-system]
