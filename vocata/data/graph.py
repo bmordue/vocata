@@ -16,7 +16,8 @@ VOC = rdflib.Namespace(VOC_URI)
 LDP_URI = "http://www.w3.org/ns/ldp#"
 LDP = rdflib.Namespace(LDP_URI)
 
-AUDIENCE_PREDICATES = {AS.to, AS.bto, AS.cc, AS.bcc}
+HAS_AUDIENCE = AS.to | AS.bto | AS.cc | AS.bcc
+HAS_BOX = LDP.inbox | AS.outbox
 
 
 class ActivityPubGraph(rdflib.Graph):
@@ -74,14 +75,13 @@ class ActivityPubGraph(rdflib.Graph):
         return new_g
 
     def is_a_box(self, subject: rdflib.term.Identifier | str) -> bool:
-        return (None, LDP.inbox | AS.outbox, subject) in self
+        return (None, HAS_BOX, subject) in self
 
     def is_an_actor(self, subject: rdflib.term.Identifier | str) -> bool:
         return (None, AS.actor, subject) in self
 
     def is_public(self, subject: rdflib.term.Identifier | str) -> bool:
-        predicates = set(self.predicates(subject=subject, object=AS.Public))
-        return predicates & AUDIENCE_PREDICATES
+        return (subject, HAS_AUDIENCE, AS.public) in self
 
     def is_authorized(self, actor: rdflib.URIRef | str | None, subject: rdflib.term.Identifier | str) -> bool:
         if self.is_public(subject):
