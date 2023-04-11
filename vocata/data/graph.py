@@ -120,6 +120,9 @@ class ActivityPubGraph(rdflib.Graph):
         for subject in self.subjects():
             if root_graph.is_authorized(actor, subject):
                 for s, p, o in self.triples((subject, None, None)):
+                    if s in VOC or p in VOC or o in VOC:
+                        # Never expose any triples involving local information scheme
+                        continue
                     new_g.add((s, p, o))
 
         return new_g
