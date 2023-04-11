@@ -1,1 +1,1 @@
-from .graph import ActivityPubGraph, get_graph
+from .graph import AccessMode, ActivityPubGraph, PUBLIC_ACTOR, get_graph

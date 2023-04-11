@@ -1,4 +1,5 @@
 import json
+from enum import Enum
 from uuid import uuid4
 
 import rdflib
@@ -16,8 +17,15 @@ VOC = rdflib.Namespace(VOC_URI)
 LDP_URI = "http://www.w3.org/ns/ldp#"
 LDP = rdflib.Namespace(LDP_URI)
 
-HAS_AUDIENCE = AS.to | AS.bto | AS.cc | AS.bcc
+HAS_AUDIENCE = AS.audience | AS.to | AS.bto | AS.cc | AS.bcc
 HAS_BOX = LDP.inbox | AS.outbox
+
+PUBLIC_ACTOR = AS.Public
+
+
+class AccessMode(Enum):
+    READ = 1
+    WRITE = 2
 
 
 class ActivityPubGraph(rdflib.Graph):
@@ -81,13 +89,23 @@ class ActivityPubGraph(rdflib.Graph):
         return (None, AS.actor, subject) in self
 
     def is_public(self, subject: rdflib.term.Identifier | str) -> bool:
-        return (subject, HAS_AUDIENCE, AS.public) in self
+        return (subject, HAS_AUDIENCE, PUBLIC_ACTOR) in self
 
-    def is_authorized(self, actor: rdflib.URIRef | str | None, subject: rdflib.term.Identifier | str) -> bool:
-        if self.is_public(subject):
-            return True
-        if self.is_an_actor(subject):
-            return True
+    def is_box_owner(self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str) -> bool:
+        return (actor, HAS_BOX, subject) in self and self.is_a_box(subject)
+
+    def is_authorized(self, actor: rdflib.URIRef | str | None, subject: rdflib.term.Identifier | str, mode: AccessMode = AccessMode.READ) -> bool:
+        if mode == AccessMode.READ:
+            if self.is_public(subject):
+                # Activities posted to the special Public audience can be read
+                return True
+            if self.is_an_actor(subject):
+                # Actor objects can generally be read
+                return True
+        elif mode == AccessMode.WRITE:
+            if self.is_box_owner(actor, subject):
+                # Owners of inboxes and outboxes can write to their boxes
+                return True
 
         return False
 
