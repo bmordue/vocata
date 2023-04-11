@@ -94,7 +94,7 @@ class ActivityPubGraph(rdflib.Graph):
     def is_box_owner(self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str) -> bool:
         return (actor, HAS_BOX, subject) in self and self.is_a_box(subject)
 
-    def is_authorized(self, actor: rdflib.URIRef | str | None, subject: rdflib.term.Identifier | str, mode: AccessMode = AccessMode.READ) -> bool:
+    def is_authorized(self, actor: rdflib.URIRef | str, subject: rdflib.term.Identifier | str, mode: AccessMode = AccessMode.READ) -> bool:
         if mode == AccessMode.READ:
             if self.is_public(subject):
                 # Activities posted to the special Public audience can be read
@@ -110,7 +110,7 @@ class ActivityPubGraph(rdflib.Graph):
         return False
 
     def filter_authorized(
-        self, actor: rdflib.URIRef | str | None, root_graph: rdflib.Graph | None = None
+        self, actor: rdflib.URIRef | str, root_graph: rdflib.Graph | None = None
     ) -> rdflib.Graph:
         if root_graph is None:
             root_graph = self
@@ -134,7 +134,7 @@ class ActivityPubGraph(rdflib.Graph):
 
         return compacted
 
-    def get_single_activitystream(self, uri: str, actor: str | None = None) -> dict | None:
+    def get_single_activitystream(self, uri: str, actor: str = str(PUBLIC_ACTOR)) -> dict | None:
         doc = (
             self.filter_subject(rdflib.URIRef(uri))
             .filter_authorized(actor, self)
