@@ -1,17 +1,45 @@
 import json
+from uuid import uuid4
 
 import rdflib
 from pyld import jsonld
+from rdflib.namespace import RDF
 
 from .util import jsonld_single, jsonld_cleanup_ids
 
 AS_URI = "https://www.w3.org/ns/activitystreams#"
 AS = rdflib.Namespace(AS_URI)
 
+VOC_URI = "https://docs.vocata.one/information-schema#"
+VOC = rdflib.Namespace(VOC_URI)
+
 AUDIENCE_PREDICATES = {AS.to, AS.bto, AS.cc, AS.bcc}
 
 
 class ActivityPubGraph(rdflib.Graph):
+    def open(self, *args, **kwargs):
+        super().open(*args, **kwargs)
+        self.setup_instance()
+
+    def setup_instance(self):
+        if not self.instance_ref:
+            uuid = str(uuid4())
+            ref = rdflib.URIRef(f"urn:uuid:{uuid}")
+
+            self.add((VOC.Instance, VOC.instance, ref))
+            self.add((ref, RDF.type, VOC.Instance))
+
+    @property
+    def instance_ref(self) -> rdflib.URIRef | None:
+        return self.value(VOC.Instance, VOC.instance)
+
+    @property
+    def instance_uuid(self) -> str | None:
+        ref = self.instance_ref
+        if ref is None:
+            return None
+        return str(self.instance_ref).split(":")[2]
+
     def filter_subject(
         self,
         subject: rdflib.IdentifiedNode,
@@ -97,7 +125,7 @@ class ActivityPubGraph(rdflib.Graph):
 
 
 def get_graph() -> ActivityPubGraph:
-    graph = ActivityPubGraph("SQLAlchemy")
+    graph = ActivityPubGraph("SQLAlchemy", identifier=str(VOC.Instance))
     # FIXME Make configurable
     graph.open("sqlite:///graph.db", create=True)
 
