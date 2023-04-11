@@ -16,3 +16,10 @@ class ActivityPubEndpoint(HTTPEndpoint):
             return JSONResponse({"error": "Not found"}, 404)
 
         return JSONResponse(doc)
+
+    async def post(self, request: Request) -> JSONResponse:
+        graph = get_graph()
+
+        # POST target must be an inbox or outbox collection
+        if not graph.is_a_box(str(request.url)):
+            return JSONResponse({"error": "Not an inbox or outbox"}, 405)
