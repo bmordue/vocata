@@ -5,6 +5,7 @@ from uuid import uuid4
 import rdflib
 from pyld import jsonld
 from rdflib.namespace import NamespaceManager, RDF
+from rdflib.parser import PythonInputSource
 
 from .util import jsonld_single, jsonld_cleanup_ids
 
@@ -20,7 +21,10 @@ LDP = rdflib.Namespace(LDP_URI)
 SEC_URI = "https://w3id.org/security#"
 SEC = rdflib.Namespace(SEC_URI)
 
+# FIXME validate against spec
 HAS_AUDIENCE = AS.audience | AS.to | AS.bto | AS.cc | AS.bcc
+HAS_ACTOR = AS.actor | AS.attributedTo
+
 HAS_BOX = LDP.inbox | AS.outbox
 
 PUBLIC_ACTOR = AS.Public
@@ -93,6 +97,12 @@ class ActivityPubGraph(rdflib.Graph):
     def is_an_actor(self, subject: rdflib.term.Identifier | str) -> bool:
         return (None, AS.actor, subject) in self
 
+    def is_sender(self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str) -> bool:
+        return (subject, HAS_ACTOR, actor) in self
+
+    def is_recipient(self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str) -> bool:
+        return (subject, HAS_AUDIENCE, actor) in self
+
     def is_public(self, subject: rdflib.term.Identifier | str) -> bool:
         return (subject, HAS_AUDIENCE, PUBLIC_ACTOR) in self
 
@@ -106,6 +116,12 @@ class ActivityPubGraph(rdflib.Graph):
                 return True
             if self.is_an_actor(subject):
                 # Actor objects can generally be read
+                return True
+            if self.is_sender(actor, subject):
+                # Senders may read their own activities
+                return True
+            if self.is_audience(actor, subject):
+                # Direct recipients may see activities
                 return True
         elif mode == AccessMode.WRITE:
             if self.is_box_owner(actor, subject):
@@ -136,7 +152,7 @@ class ActivityPubGraph(rdflib.Graph):
         return new_g
 
     def to_activitystreams(self) -> dict:
-        profile = AS_URI
+        profile = AS_URI.removesuffix("#")
 
         doc = json.loads(self.serialize(format="json-ld"))
 
@@ -188,6 +204,18 @@ class ActivityPubGraph(rdflib.Graph):
         pem = self.get_private_key_by_id(id_)
 
         return str(id_), str(pem)
+
+    def add_activitystream(self, data: dict) -> rdflib.Graph:
+        # Parse into a new graph first, in case something fails
+        new_g = rdflib.Graph()
+        source = PythonInputSource(data, data["id"])
+        new_g.parse(source, format="json-ld")
+
+        # Remvoe all statements about subject and add new
+        self.remove((data["id"], None, None))
+        self += new_g
+
+        return new_g
 
 def get_graph() -> ActivityPubGraph:
     graph = ActivityPubGraph("SQLAlchemy", identifier=str(VOC.Instance))

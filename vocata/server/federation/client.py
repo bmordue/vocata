@@ -26,7 +26,7 @@ class ActivityPubFederator:
         meta = metadata("Vocata")
         return f"{meta['Name']}/{meta['Version']}"
 
-    def _request(self, method: str, target: str | None = None, data: dict | None = None) -> Response:
+    def _request(self, method: str, target: str, data: dict | None = None) -> Response:
         if method not in ["GET", "POST"]:
             raise ValueError("Only GET and POST are valid HTTP methods for ActivityPub")
 
@@ -44,3 +44,23 @@ class ActivityPubFederator:
             )
 
         return self._session.request(method, target, headers=headers, json=data, auth=auth)
+
+    def pull(self) -> Response:
+        response = self._request("GET", self.subject)
+        response.raise_for_status()
+
+        if response.status_code == 200:
+            self._graph.add_activitystream(response.json())
+
+        return response
+
+    def push_to(self, target: str) -> Response:
+        # FIXME do we really want to retrieve as `actor` here?
+        data = self._graph.get_single_activitystream(self.subject, self.actor)
+        if not data:
+            # FIXME do we want to use this for re-pushing as well?
+            #  in that case, we should pull first
+            raise KeyError(f"{self.subject} is unknown")
+
+        # FIXME test for locally owned targets here
+        return self._request("POST", target, data)
