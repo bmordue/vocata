@@ -130,6 +130,30 @@ To conclude, [ActivityPub] servers keep pushing and pulling
 sub-graphs, so-called *Concise Bounded Descriptions*, of objects
 that are relevant for their users.
 
+## Implementation details of Vocata
+
+Assuming the graph structure of the [Fediverse], Vocata
+uses [rdflib] to store its sub-graph. In contrast to other
+[ActivityPub] servers, it does not derive its own data
+structures from the objects it handles, but plainly
+processes the graph operations defined by the protocol
+to traverse and transform its sub-graph of the Fediverse.
+
+## The Vocata logo
+
+Vocata's logo reflects many of the concepts and assumptions
+established above:
+
+* It is based on the triangles, the arrow, and the colors
+  of the [ActivityPub] logo
+* Two more colors from a derived palette have been added, to
+  highlight that the Fediverse should be more colorful than
+  some semi-interoperable, yet somewhat zoned platforms
+* Three triangles form a [Sierpinski triangle], which is a
+  fractal, much like the structure of the [ActivityPub] social
+  graph (global graph, instance sub-graph, and CBD transferred
+  between them being three of its iterations)
+
 
 [ActivityPub]: https://activitypub.rocks/
 [Fediverse]: https://fediverse.party/
@@ -140,3 +164,5 @@ that are relevant for their users.
 [ActivityStreams]: https://www.w3.org/TR/activitystreams-core/
 [RDF]: https://www.w3.org/RDF/
 [CBD]: https://www.w3.org/Submission/CBD/
+[rdflib]: https://rdflib.readthedocs.io/en/stable/
+[Sierpinski triangle]: https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle
