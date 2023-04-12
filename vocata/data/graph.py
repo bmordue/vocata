@@ -222,6 +222,6 @@ def get_graph() -> ActivityPubGraph:
     from glob import glob
     for f in glob("/home/nik/Privat/Vocata/test/*.json"):
         graph.parse(f, format="json-ld")
-    graph.add((rdflib.URIRef("acct:tester@vocatadev.pagekite.me"), VOC.webfingerHref, rdflib.URIRef("https://vocatadev.pagekite.me/users/tester")))
+    graph.add((rdflib.URIRef("acct:tester1@vocatadev.pagekite.me"), VOC.webfingerHref, rdflib.URIRef("https://vocatadev.pagekite.me/users/tester1")))
 
     return graph
