@@ -18,7 +18,7 @@ class ActivityPubFederator:
         self._session = Session()
         self._session.headers = {
             "User-Agent": self._user_agent,
-            "Accept": CONTENT_TYPE,
+            "Accept": ", ".join([CONTENT_TYPE, "application/activity+json;q=0.9", "application/json;q=0.8"]),
         }
 
     @property
