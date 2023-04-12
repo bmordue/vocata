@@ -147,6 +147,7 @@ class ActivityPubGraph(rdflib.Graph):
 
     def get_single_activitystream(self, uri: str, actor: str = str(PUBLIC_ACTOR)) -> dict | None:
         doc = (
+            # FIXME replace with self.cbd() once rdflib >6.3.2 is released
             self.filter_subject(rdflib.URIRef(uri))
             .filter_authorized(actor, self)
             .to_activitystreams()
