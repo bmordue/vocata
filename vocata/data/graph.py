@@ -17,10 +17,15 @@ VOC = rdflib.Namespace(VOC_URI)
 LDP_URI = "http://www.w3.org/ns/ldp#"
 LDP = rdflib.Namespace(LDP_URI)
 
+SEC_URI = "https://w3id.org/security#"
+SEC = rdflib.Namespace(SEC_URI)
+
 HAS_AUDIENCE = AS.audience | AS.to | AS.bto | AS.cc | AS.bcc
 HAS_BOX = LDP.inbox | AS.outbox
 
 PUBLIC_ACTOR = AS.Public
+
+HIDE_PREDICATES = {AS.bto, AS.bcc, SEC.privateKey, SEC.privateKeyPem}
 
 
 class AccessMode(Enum):
@@ -123,6 +128,9 @@ class ActivityPubGraph(rdflib.Graph):
                     if s in VOC or p in VOC or o in VOC:
                         # Never expose any triples involving local information scheme
                         continue
+                    if p in HIDE_PREDICATES:
+                        # Never expose some triples, see above
+                        continue
                     new_g.add((s, p, o))
 
         return new_g
@@ -150,6 +158,36 @@ class ActivityPubGraph(rdflib.Graph):
 
         return single
 
+    def get_public_key_by_id(self, id_: rdflib.term.Identifier | str) -> str:
+        pem = self.value(subject=id_, predicate=SEC.publicKeyPem)
+        if pem is None:
+            raise KeyError(f"Key for {actor} not found or incomplete")
+
+        return str(pem)
+
+    def get_public_key(self, actor: rdflib.term.Identifier | str) -> tuple[str, str]:
+        id_ = self.value(subject=actor, predicate=SEC.publicKey)
+        if id_ is None:
+            raise KeyError(f"Key for {actor} not found or incomplete")
+
+        pem = self.get_public_key_by_id(id_)
+        return str(id_), str(pem)
+
+    def get_private_key_by_id(self, id_: rdflib.term.Identifier | str) -> str:
+        pem = self.value(subject=id_, predicate=SEC.privateKeyPem)
+        if pem is None:
+            raise KeyError(f"Key for {actor} not found or incomplete")
+
+        return str(pem)
+
+    def get_private_key(self, actor: rdflib.term.Identifier | str) -> tuple[str, str]:
+        id_ = self.value(subject=actor, predicate=SEC.privateKey)
+        if id_ is None:
+            raise KeyError(f"Key for {actor} not found or incomplete")
+
+        pem = self.get_private_key_by_id(id_)
+
+        return str(id_), str(pem)
 
 def get_graph() -> ActivityPubGraph:
     graph = ActivityPubGraph("SQLAlchemy", identifier=str(VOC.Instance))

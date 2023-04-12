@@ -16,6 +16,8 @@ pyld = "^2.0.3"
 requests = "^2.28.2"
 starlette = "^0.26.1"
 rdflib-sqlalchemy = "^0.5.4"
+requests-http-message-signatures = "^0.3.1"
+cryptography = "^40.0.1"
 
 
 [build-system]
