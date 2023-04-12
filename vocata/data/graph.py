@@ -61,6 +61,12 @@ class ActivityPubGraph(rdflib.Graph):
             return None
         return str(self.instance_ref).split(":")[2]
 
+    def get_actor_uri_by_acct(self, acct: str) -> str | None:
+        uri = self.value(subject=acct, predicate=VOC.webfingerHref)
+        if uri is None:
+            return None
+        return str(uri)
+
     def filter_subject(
         self,
         subject: rdflib.IdentifiedNode,
@@ -120,7 +126,7 @@ class ActivityPubGraph(rdflib.Graph):
             if self.is_sender(actor, subject):
                 # Senders may read their own activities
                 return True
-            if self.is_audience(actor, subject):
+            if self.is_recipient(actor, subject):
                 # Direct recipients may see activities
                 return True
         elif mode == AccessMode.WRITE:
@@ -226,5 +232,6 @@ def get_graph() -> ActivityPubGraph:
     from glob import glob
     for f in glob("/home/nik/Privat/Vocata/test/*.json"):
         graph.parse(f, format="json-ld")
+    graph.add((rdflib.URIRef("acct:tester@vocatadev.pagekite.me"), VOC.webfingerHref, rdflib.URIRef("https://vocatadev.pagekite.me/users/tester")))
 
     return graph

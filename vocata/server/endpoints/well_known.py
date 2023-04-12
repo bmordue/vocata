@@ -3,6 +3,7 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route
 
 from .nodeinfo import NodeInfoEndpoint
+from .webfinger import WebfingerEndpoint
 
 
 def nodeinfo(request: Request) -> JSONResponse:
@@ -24,4 +25,5 @@ FUNCTIONAL = [
 
 WELL_KNOWN = [
     Route("/nodeinfo", nodeinfo, name="nodeinfo"),
+    Route("/webfinger", WebfingerEndpoint, name="webfinger"),
 ]
