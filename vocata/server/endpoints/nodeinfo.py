@@ -5,15 +5,12 @@ from starlette.endpoints import HTTPEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from ...data import get_graph
-
 
 class NodeInfoEndpoint(HTTPEndpoint):
     schema: ClassVar[str] = "http://nodeinfo.diaspora.software/ns/schema/2.1"
 
     async def get(self, request: Request) -> JSONResponse:
         meta = metadata("Vocata")
-        graph = get_graph()
 
         nodeinfo = {
             "version": "2.1",
@@ -37,7 +34,7 @@ class NodeInfoEndpoint(HTTPEndpoint):
             },
             "metadata": {
                 "instance": {
-                    "uuid": graph.instance_uuid,
+                    "uuid": request.state.graph.instance_uuid,
                 }
             },
         }

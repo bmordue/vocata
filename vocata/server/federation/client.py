@@ -3,14 +3,14 @@ from importlib.metadata import metadata
 from requests import Response, Session
 from requests_http_message_signatures import HTTPSignatureHeaderAuth
 
-from ...data import get_graph
+from ...data import ActivityPubGraph, get_graph
 
 CONTENT_TYPE = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
 
 
 class ActivityPubFederator:
-    def __init__(self, subject: str, actor: str):
-        self._graph = get_graph()
+    def __init__(self, subject: str, actor: str, graph: ActivityPubGraph | None = None):
+        self._graph = graph or get_graph()
 
         self.subject = subject
         self.actor = actor

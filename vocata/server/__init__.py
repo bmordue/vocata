@@ -2,6 +2,7 @@ from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.routing import Mount, Route
 
+from ..data import get_graph
 from .endpoints.activitypub import ActivityPubEndpoint
 from .endpoints.well_known import FUNCTIONAL, WELL_KNOWN
 from .middleware import ActivityPubActorMiddleware
@@ -14,3 +15,4 @@ routes = [
 ]
 
 app = Starlette(debug=True, middleware=middlewares, routes=routes)
+app.state.graph = get_graph()
