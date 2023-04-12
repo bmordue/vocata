@@ -640,18 +640,17 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "rdflib"
-version = "6.3.2"
-description = "RDFLib is a Python library for working with RDF, a simple yet powerful language for representing information."
+version = "6.4.0a0"
+description = """RDFLib is a Python library for working with RDF, \
+a simple yet powerful language for representing information."""
 category = "main"
 optional = false
-python-versions = ">=3.7,<4.0"
-files = [
-    {file = "rdflib-6.3.2-py3-none-any.whl", hash = "sha256:36b4e74a32aa1e4fa7b8719876fb192f19ecd45ff932ea5ebbd2e417a0247e63"},
-    {file = "rdflib-6.3.2.tar.gz", hash = "sha256:72af591ff704f4caacea7ecc0c5a9056b8553e0489dd4f35a9bc52dbd41522e0"},
-]
+python-versions = "^3.7"
+files = []
+develop = false
 
 [package.dependencies]
-isodate = ">=0.6.0,<0.7.0"
+isodate = "^0.6.0"
 pyparsing = ">=2.1.0,<4"
 
 [package.extras]
@@ -659,6 +658,12 @@ berkeleydb = ["berkeleydb (>=18.1.0,<19.0.0)"]
 html = ["html5lib (>=1.0,<2.0)"]
 lxml = ["lxml (>=4.3.0,<5.0.0)"]
 networkx = ["networkx (>=2.0.0,<3.0.0)"]
+
+[package.source]
+type = "git"
+url = "https://github.com/RDFLib/rdflib.git"
+reference = "HEAD"
+resolved_reference = "81d13d432b7e49b557b5de11691bdeaed31a9b06"
 
 [[package]]
 name = "rdflib-sqlalchemy"
@@ -865,4 +870,4 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "1df72e181ffcd90bf76d51ad8b540e8ffba0c3edb7070bc42fd9a78517d5b1ae"
+content-hash = "a8c4d4a7bc44c5592b4d0386700c906a7cf8e48a6eb16d67803ca318c35bf758"
