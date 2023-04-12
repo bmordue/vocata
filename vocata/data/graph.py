@@ -73,6 +73,9 @@ class ActivityPubGraph(rdflib.Graph):
     def is_an_actor(self, subject: rdflib.term.Identifier | str) -> bool:
         return (None, AS.actor, subject) in self
 
+    def is_an_actor_public_key(self, subject: rdflib.term.Identifier | str) -> bool:
+        return (None, AS.actor/SEC.publicKey, subject) in self
+
     def is_sender(self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str) -> bool:
         return (subject, HAS_ACTOR, actor) in self
 
@@ -92,6 +95,9 @@ class ActivityPubGraph(rdflib.Graph):
                 return True
             if self.is_an_actor(subject):
                 # Actor objects can generally be read
+                return True
+            if self.is_an_actor_public_key(subject):
+                # Public keys of actors can be read
                 return True
             if self.is_sender(actor, subject):
                 # Senders may read their own activities
@@ -138,8 +144,22 @@ class ActivityPubGraph(rdflib.Graph):
         return compacted
 
     def get_single_activitystream(self, uri: str, actor: str = str(PUBLIC_ACTOR)) -> dict | None:
+        cbd = self.__class__()
+        subjects = {rdflib.URIRef(uri)}
+        seen = set()
+        while subjects:
+            current_subject = subjects.pop()
+            seen.add(current_subject)
+            new_cbd = self.cbd(current_subject, target_graph=self.__class__())
+            for s, p, o in new_cbd.triples((None, None, None)):
+                # We need to include objects with URI fragments,
+                #  they cannot be dereferenced remotely alone
+                if isinstance(o, rdflib.URIRef) and o.fragment and o not in seen and o.startswith(s.removesuffix("#"+s.fragment)+"#"):
+                    subjects.add(o)
+            cbd += new_cbd
+
         doc = (
-            self.cbd(rdflib.URIRef(uri), target_graph=self.__class__())
+            cbd
             .filter_authorized(actor, self)
             .to_activitystreams()
         )
