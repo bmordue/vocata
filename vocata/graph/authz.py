@@ -47,9 +47,6 @@ class ActivityPubAuthzMixin:
     ) -> bool:
         return (actor, HAS_BOX, subject) in self and self.is_a_box(subject)
 
-    def is_a_box(self, subject: rdflib.term.Identifier | str) -> bool:
-        return (None, AS.outbox, subject) in self
-
     def is_authorized(
         self,
         actor: rdflib.URIRef | str,
