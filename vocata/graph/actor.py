@@ -90,6 +90,7 @@ class ActivityPubActorMixin:
         self.set((followers_uri, AS.totalItems, rdflib.Literal(0)))
 
         self.set((actor_uri, RDF.type, actor_type))
+        self.set((actor_uri, AS.preferredUsername, rdflib.Literal(local)))
         self.set((actor_uri, AS.name, rdflib.Literal(name)))
         self.set((actor_uri, LDP.inbox, inbox_uri))
         self.set((actor_uri, AS.outbox, outbox_uri))
