@@ -9,7 +9,6 @@ HAS_AUDIENCE = AS.audience | AS.to | AS.bto | AS.cc | AS.bcc
 HAS_ACTOR = AS.actor | AS.attributedTo
 HAS_BOX = LDP.inbox | AS.outbox | AS.followers | AS.following
 
-
 PUBLIC_ACTOR = AS.Public
 
 HIDE_PREDICATES = {AS.bto, AS.bcc, SEC.privateKey, SEC.privateKeyPem}
@@ -48,6 +47,9 @@ class ActivityPubAuthzMixin:
     ) -> bool:
         return (actor, HAS_BOX, subject) in self and self.is_a_box(subject)
 
+    def is_a_box(self, subject: rdflib.term.Identifier | str) -> bool:
+        return (None, AS.outbox, subject) in self
+
     def is_authorized(
         self,
         actor: rdflib.URIRef | str,
@@ -60,6 +62,9 @@ class ActivityPubAuthzMixin:
                 return True
             if self.is_an_actor(subject):
                 # Actor objects can generally be read
+                return True
+            if self.is_a_box(subject):
+                # Inboxes, outboxes, and follower, following are readable
                 return True
             if self.is_an_actor_public_key(subject):
                 # Public keys of actors can be read
