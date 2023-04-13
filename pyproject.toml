@@ -16,7 +16,6 @@ rdflib = { git = "https://github.com/RDFLib/rdflib.git" }
 rdflib-sqlalchemy = "^0.5.4"
 pyld = "^2.0.3"
 requests = "^2.28.2"
-requests-http-message-signatures = "^0.3.1"
 cryptography = "^40.0.1"
 starlette = { version = "^0.26.1", optional = true }
 uvicorn = { version = "^0.21.1", optional = true }

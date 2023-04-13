@@ -810,7 +810,8 @@ diagrams = ["jinja2", "railroad-diagrams"]
 [[package]]
 name = "rdflib"
 version = "6.4.0a0"
-description = "RDFLib is a Python library for working with RDF, a simple yet powerful language for representing information."
+description = """RDFLib is a Python library for working with RDF, \
+a simple yet powerful language for representing information."""
 category = "main"
 optional = false
 python-versions = "^3.7"
@@ -872,22 +873,6 @@ urllib3 = ">=1.21.1,<1.27"
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
-
-[[package]]
-name = "requests-http-message-signatures"
-version = "0.3.1"
-description = "A request authentication plugin implementing IETF HTTP Message Signatures"
-category = "main"
-optional = false
-python-versions = ">=3.7,<4.0"
-files = [
-    {file = "requests-http-message-signatures-0.3.1.tar.gz", hash = "sha256:0235bb5cd3f4a7d659645e2ac937da72791321434e77570f7e21042e510820da"},
-    {file = "requests_http_message_signatures-0.3.1-py3-none-any.whl", hash = "sha256:c20d49adecbebdccfa98676b0760c12a8c2753d262dcb3a8f54cd672794bfb85"},
-]
-
-[package.dependencies]
-cryptography = ">=1.8.2"
-requests = ">=2,<3"
 
 [[package]]
 name = "rich"
@@ -1155,4 +1140,4 @@ server = ["starlette", "uvicorn"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "0d7d28d04456ab16e07d7e61a03dea23e521256d7ac1462e163d76fdb6e2ac36"
+content-hash = "0a1a609ea684060a4caffacb93553cb44e37345b19b5efca969834d8cfb46a0d"
