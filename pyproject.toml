@@ -10,7 +10,7 @@ repository = "https://codeberg.org/Vocata/vocata"
 keywords = ["activitypub", "fediverse"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 # FIXME revert to stable release after 6.4.0
 rdflib = { git = "https://github.com/RDFLib/rdflib.git" }
 pyld = "^2.0.3"
@@ -19,6 +19,17 @@ starlette = "^0.26.1"
 rdflib-sqlalchemy = "^0.5.4"
 requests-http-message-signatures = "^0.3.1"
 cryptography = "^40.0.1"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.0.261"
+
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
 
 
 [build-system]

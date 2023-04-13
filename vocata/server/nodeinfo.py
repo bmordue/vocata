@@ -40,3 +40,16 @@ class NodeInfoEndpoint(HTTPEndpoint):
         }
 
         return JSONResponse(nodeinfo, media_type=f'application/json; profile="{self.schema}#"')
+
+
+def nodeinfo_wellknown(request: Request) -> JSONResponse:
+    return JSONResponse(
+        {
+            "links": [
+                {
+                    "rel": NodeInfoEndpoint.schema,
+                    "href": str(request.url_for("functional:nodeinfo")),
+                }
+            ]
+        }
+    )

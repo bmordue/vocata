@@ -1,6 +1,3 @@
-from importlib.metadata import metadata
-from typing import ClassVar
-
 from starlette.endpoints import HTTPEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse
