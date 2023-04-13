@@ -11,6 +11,8 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from requests import Request, Response, Session
 from requests.auth import AuthBase
 
+from .authz import HAS_ACTOR, HAS_TRANSIENT_AUDIENCE, HAS_TRANSIENT_INBOXES, PUBLIC_ACTOR
+
 if TYPE_CHECKING:
     from .graph import ActivityPubGraph
 
@@ -134,14 +136,14 @@ class ActivityPubFederationMixin:
 
         return self.http_session.request(method, target, headers=headers, json=data, auth=auth)
 
-    def pull(self, subject: str, actor: str) -> Response:
+    def pull(self, subject: str, actor: str = PUBLIC_ACTOR) -> tuple[bool, Response]:
         response = self._request("GET", subject, actor)
         response.raise_for_status()
 
         if response.status_code == 200:
             self.add_jsonld(response.json())
 
-        return response
+        return response.status_code < 400, response
 
     def push_to(self, target: str, subject: str, actor: str) -> Response:
         # FIXME do we really want to retrieve as `actor` here?
@@ -153,3 +155,40 @@ class ActivityPubFederationMixin:
 
         # FIXME test for locally owned targets here
         return self._request("POST", target, actor, data)
+
+    def get_all_targets(self, subject: str) -> set[str]:
+        # FIXME enable once we can distinguish local and remote
+        # self.pull(subject)
+
+        audience = set()
+        for _ in range(3):
+            new_audience = set(
+                map(str, self.objects(subject=subject, predicate=HAS_TRANSIENT_AUDIENCE))
+            )
+            if audience == new_audience:
+                break
+            for recipient in new_audience:
+                if recipient != PUBLIC_ACTOR and recipient not in audience:
+                    self.pull(recipient)
+            audience = new_audience
+
+        inboxes = self.objects(subject=subject, predicate=HAS_TRANSIENT_INBOXES)
+        return set(map(str, inboxes))
+
+    def push(self, subject: str) -> tuple[set[Response], set[Response]]:
+        actor = self.value(subject=subject, predicate=HAS_ACTOR)
+        if not actor:
+            raise TypeError(f"{subject} has no actor; can only push activities")
+
+        targets = self.get_all_targets(subject)
+
+        succeeded = set()
+        failed = set()
+        for target in targets:
+            res = self.push_to(target, subject, actor)
+            if res.status_code < 400:
+                succeeded.add(res)
+            else:
+                failed.add(res)
+
+        return succeeded, failed

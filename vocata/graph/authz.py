@@ -1,12 +1,17 @@
 from enum import Enum
 
 import rdflib
+from rdflib.paths import ZeroOrMore
 
 from .schema import AS, LDP, SEC, VOC
 
 # FIXME validate against spec
 HAS_AUDIENCE = AS.audience | AS.to | AS.bto | AS.cc | AS.bcc
-HAS_ACTOR = AS.actor | AS.attributedTo
+HAS_TRANSIENT_AUDIENCE = HAS_AUDIENCE / (AS.items * ZeroOrMore)
+# FIXME support shared inboxes
+HAS_TRANSIENT_INBOXES = HAS_TRANSIENT_AUDIENCE / LDP.inbox
+HAS_ACTOR = AS.actor
+HAS_AUTHOR = AS.actor | AS.attributedTo
 HAS_BOX = LDP.inbox | AS.outbox | AS.followers | AS.following
 
 PUBLIC_ACTOR = AS.Public
@@ -29,10 +34,10 @@ class ActivityPubAuthzMixin:
     def is_an_actor_public_key(self, subject: rdflib.term.Identifier | str) -> bool:
         return (None, AS.actor / SEC.publicKey, subject) in self
 
-    def is_sender(
+    def is_author(
         self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str
     ) -> bool:
-        return (subject, HAS_ACTOR, actor) in self
+        return (subject, HAS_AUTHOR, actor) in self
 
     def is_recipient(
         self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str
@@ -66,7 +71,7 @@ class ActivityPubAuthzMixin:
             if self.is_an_actor_public_key(subject):
                 # Public keys of actors can be read
                 return True
-            if self.is_sender(actor, subject):
+            if self.is_author(actor, subject):
                 # Senders may read their own activities
                 return True
             if self.is_recipient(actor, subject):
