@@ -36,4 +36,5 @@ def create(
 
     uri = graph.create_actor_from_acct(account, name, actor_type.value)
 
-    ctx.obj["log"].info("Account %s created at URI %s", account, str(uri))
+    if not uri:
+        raise typer.Exit(code=2)

@@ -115,6 +115,7 @@ class ActivityPubFederationMixin:
     @property
     def http_session(self) -> Session:
         if self._http_session is None:
+            self._logger.debug("Creating new HTTP client session")
             self._http_session = Session()
             self._http_session.headers = {
                 "User-Agent": self._user_agent,
@@ -128,24 +129,32 @@ class ActivityPubFederationMixin:
         if method not in ["GET", "POST"]:
             raise ValueError("Only GET and POST are valid HTTP methods for ActivityPub")
 
+        self._logger.debug("Preparing new %s request to %s as %s", method, target, actor)
+
         headers = {}
         auth = None
         if method == "POST":
             headers["Content-Type"] = CONTENT_TYPE
             auth = HTTPSignatureAuth(self, actor)
+            self._logger.debug("Enabled HTTP signatures for request")
 
         return self.http_session.request(method, target, headers=headers, json=data, auth=auth)
 
     def pull(self, subject: str, actor: str = PUBLIC_ACTOR) -> tuple[bool, Response]:
+        # FIXME distinguish between local and remote
+        self._logger.info("Pulling %s from remote", subject)
         response = self._request("GET", subject, actor)
-        response.raise_for_status()
 
         if response.status_code == 200:
+            self._logger.debug("Successfully pulled %s", subject)
             self.add_jsonld(response.json())
+        else:
+            self._logger.error("Error pulling %s", subject)
 
         return response.status_code < 400, response
 
-    def push_to(self, target: str, subject: str, actor: str) -> Response:
+    def push_to(self, target: str, subject: str, actor: str) -> tuple[bool, Response]:
+        self._logger.info("Pushing %s to remote %s", subject, target)
         # FIXME do we really want to retrieve as `actor` here?
         data = self.activitystream_cbd(subject, actor).to_activitystream(subject)
         if not data:
@@ -154,9 +163,19 @@ class ActivityPubFederationMixin:
             raise KeyError(f"{subject} is unknown")
 
         # FIXME test for locally owned targets here
-        return self._request("POST", target, actor, data)
+        response = self._request("POST", target, actor, data)
+
+        if response.status_code < 400:
+            self._logger.debug("Successfully pushed %s to %s", subject, target)
+        else:
+            self._logger.error("Failed to push %s to %s", subject, target)
+
+        return response.status_code < 400, response
 
     def get_all_targets(self, subject: str) -> set[str]:
+        # FIXME we need to resolve for an actor!
+        self._logger.debug("Resolving inboxes for audience of %s", subject)
+
         # FIXME enable once we can distinguish local and remote
         # self.pull(subject)
 
@@ -173,20 +192,26 @@ class ActivityPubFederationMixin:
             audience = new_audience
 
         inboxes = self.objects(subject=subject, predicate=HAS_TRANSIENT_INBOXES)
-        return set(map(str, inboxes))
+        inbox_set = set(map(str, inboxes))
+        self._logger.debug("Resolved %s to %d inboxes", subject, len(inbox_set))
+
+        return inbox_set
 
     def push(self, subject: str) -> tuple[set[Response], set[Response]]:
+        self._logger.info("Pushing %s to its audience", subject)
+
         actor = self.value(subject=subject, predicate=HAS_ACTOR)
         if not actor:
             raise TypeError(f"{subject} has no actor; can only push activities")
+        self._logger.debug("Actor for %s is %s", subject, actor)
 
         targets = self.get_all_targets(subject)
 
         succeeded = set()
         failed = set()
         for target in targets:
-            res = self.push_to(target, subject, actor)
-            if res.status_code < 400:
+            success, res = self.push_to(target, subject, actor)
+            if success:
                 succeeded.add(res)
             else:
                 failed.add(res)

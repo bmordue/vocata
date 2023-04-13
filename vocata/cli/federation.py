@@ -14,10 +14,8 @@ def push(
 
     succeeded, failed = graph.push(activity_id)
 
-    if len(succeeded) > 0:
-        ctx.obj["log"].info("Pushed activity %s to %d inboxes", activity_id, len(succeeded))
     if len(failed) > 0:
-        ctx.obj["log"].warning("Failed to push activity %s to %d inboxes", activity_id, len(failed))
+        raise typer.Exit(code=2)
 
 
 @app.command()
@@ -29,7 +27,5 @@ def pull(
     graph = get_graph()
 
     success, _ = graph.pull(activity_id)
-    if success:
-        ctx.obj["log"].info("Pulled activity/object %s", activity_id)
-    else:
-        ctx.obj["log"].error("Failed to activity/object %s", activity_id)
+    if not success:
+        raise typer.Exit(code=2)

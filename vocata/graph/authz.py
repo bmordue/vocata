@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 
 import rdflib
 from rdflib.paths import ZeroOrMore
@@ -19,9 +19,9 @@ PUBLIC_ACTOR = AS.Public
 HIDE_PREDICATES = {AS.bto, AS.bcc, SEC.privateKey, SEC.privateKeyPem}
 
 
-class AccessMode(Enum):
-    READ = 1
-    WRITE = 2
+class AccessMode(StrEnum):
+    READ = "read"
+    WRITE = "write"
 
 
 class ActivityPubAuthzMixin:
@@ -58,37 +58,44 @@ class ActivityPubAuthzMixin:
         subject: rdflib.term.Identifier | str,
         mode: AccessMode = AccessMode.READ,
     ) -> bool:
+        action, reason = False, "no authz rule matched"
         if mode == AccessMode.READ:
             if self.is_public(subject):
                 # Activities posted to the special Public audience can be read
-                return True
-            if self.is_an_actor(subject):
+                action, reason = True, "is targeted at public"
+            elif self.is_an_actor(subject):
                 # Actor objects can generally be read
-                return True
-            if self.is_a_box(subject):
+                action, reason = True, "is an actor"
+            elif self.is_a_box(subject):
                 # Inboxes, outboxes, and follower, following are readable
-                return True
-            if self.is_an_actor_public_key(subject):
+                action, reason = True, "is a box collection"
+            elif self.is_an_actor_public_key(subject):
                 # Public keys of actors can be read
-                return True
-            if self.is_author(actor, subject):
+                action, reason = True, "is an actor public key"
+            elif self.is_author(actor, subject):
                 # Senders may read their own activities
-                return True
-            if self.is_recipient(actor, subject):
+                action, reason = True, "is author of object"
+            elif self.is_recipient(actor, subject):
                 # Direct recipients may see activities
-                return True
+                action, reason = True, "is recipient of object"
         elif mode == AccessMode.WRITE:
             if self.is_box_owner(actor, subject):
                 # Owners of inboxes and outboxes can write to their boxes
-                return True
+                action, reason = True, "is owner of box collection"
 
-        return False
+        action_name = "Grant" if action else "Deny"
+        self._logger.debug(
+            "%sing %s access on %s to %s: %s", action_name, mode.value, subject, actor, reason
+        )
+        return action
 
     def filter_authorized(
         self, actor: rdflib.URIRef | str, root_graph: rdflib.Graph | None = None
     ) -> rdflib.Graph:
         if root_graph is None:
             root_graph = self
+
+        self._logger.debug("Filtering (sub)graph using authorization rules")
 
         new_g = self.__class__()
 

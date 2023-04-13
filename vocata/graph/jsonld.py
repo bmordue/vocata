@@ -76,11 +76,13 @@ class JSONLDMixin:
         return doc
 
     def activitystream_cbd(self, uri: str, actor: str) -> Self:
+        self._logger.debug("Deriving CBD for %s as %s", uri, actor)
         cbd = self.__class__()
         subjects = {rdflib.URIRef(uri)}
         seen = set()
         while subjects:
             current_subject = subjects.pop()
+            self._logger.debug("Adding %s to CBD", current_subject)
             seen.add(current_subject)
             new_cbd = self.cbd(current_subject, target_graph=self.__class__())
             for s, p, o in new_cbd.triples((None, None, None)):
@@ -103,6 +105,7 @@ class JSONLDMixin:
         new_g.parse(source, format="json-ld")
 
         # Remvoe all statements about subject and add new
+        self._logger.debug("Replacing %s from JSON-LD document", data["id"])
         self.remove((data["id"], None, None))
         self += new_g
 
