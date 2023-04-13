@@ -20,6 +20,8 @@ requests-http-message-signatures = "^0.3.1"
 cryptography = "^40.0.1"
 starlette = { version = "^0.26.1", optional = true }
 uvicorn = { version = "^0.21.1", optional = true }
+typer = {version = "^0.7.0", optional = true, extras = ["all"]}
+shortuuid = "^1.0.11"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.261"
@@ -27,8 +29,10 @@ black = "^23.3.0"
 
 [tool.poetry.extras]
 server = ["starlette", "uvicorn"]
+cli = ["typer"]
 
 [tool.poetry.scripts]
+vocata-cli = { callable = "vocata.cli:app", extras = ["cli"] }
 vocata-server = { callable = "vocata.server.server:run_server", extras = ["server"] }
 
 [tool.black]
