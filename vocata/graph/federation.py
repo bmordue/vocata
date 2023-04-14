@@ -33,10 +33,11 @@ class HTTPSignatureAuth(AuthBase):
 
         self._graph = graph
         if actor:
-            self._key_id, _ = self._graph.get_private_key(actor)
+            self._key_id, _ = self._graph.get_public_key(actor)
             if not self._key_id:
-                raise ValueError(f"No known key ID for {actor}")
-            self._graph._logger.debug("Found key ID %s for %s", self._key_id, actor)
+                self._graph._logger.debug("Found key ID %s for %s", self._key_id, actor)
+            else:
+                self._graph._logger.warning("No known key ID for %s", actor)
         else:
             self._key_id = key_id
         self._graph._logger.debug("Creating HTTP signer with key ID %s", self._key_id)
@@ -75,7 +76,8 @@ class HTTPSignatureAuth(AuthBase):
         self._graph._logger.debug("Request headers before signing: %s", pformat(request.headers))
 
         if not self._private_key:
-            raise ValueError(f"Private key {self._key_id} is unknown")
+            self._graph._logger.error("Private key unknown. Skipping signature.")
+            return request
 
         signature_data = []
         used_headers = []
@@ -162,6 +164,7 @@ class ActivityPubFederationMixin:
         auth = None
         if method == "POST":
             headers["Content-Type"] = CONTENT_TYPE
+        if actor != PUBLIC_ACTOR:
             auth = HTTPSignatureAuth(self, actor)
             self._logger.debug("Enabled HTTP signatures for request")
 
@@ -208,7 +211,7 @@ class ActivityPubFederationMixin:
 
         return response.status_code < 400, response
 
-    def get_all_targets(self, subject: str) -> set[str]:
+    def get_all_targets(self, subject: str, actor: str = PUBLIC_ACTOR) -> set[str]:
         # FIXME we need to resolve for an actor!
         self._logger.debug("Resolving inboxes for audience of %s", subject)
 
@@ -224,7 +227,7 @@ class ActivityPubFederationMixin:
                 break
             for recipient in new_audience:
                 if recipient != PUBLIC_ACTOR and recipient not in audience:
-                    self.pull(recipient)
+                    self.pull(recipient, actor)
             audience = new_audience
 
         inboxes = self.objects(subject=subject, predicate=HAS_TRANSIENT_INBOXES)
@@ -241,7 +244,7 @@ class ActivityPubFederationMixin:
             raise TypeError(f"{subject} has no actor; can only push activities")
         self._logger.debug("Actor for %s is %s", subject, actor)
 
-        targets = self.get_all_targets(subject)
+        targets = self.get_all_targets(subject, actor)
 
         succeeded = set()
         failed = set()
