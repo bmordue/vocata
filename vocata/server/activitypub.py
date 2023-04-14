@@ -14,7 +14,7 @@ class ActivityPubEndpoint(HTTPEndpoint):
     ) -> bool | tuple[int, str]:
         # Check authorization
         if request.state.graph.is_authorized(
-            request.state.actor, request.state.subject, AccessMode.READ
+            request.state.actor, request.state.subject, mode
         ):
             return True
         elif str(request.state.actor) == str(PUBLIC_ACTOR):
