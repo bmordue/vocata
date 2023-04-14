@@ -5,8 +5,6 @@ import rdflib
 from pyld import jsonld
 from rdflib.parser import PythonInputSource
 
-from .schema import AS_URI
-
 
 def jsonld_single(doc: dict, id_: str, key_: str = "id") -> dict:
     if "@graph" not in doc:
@@ -54,20 +52,31 @@ def jsonld_cleanup_ids(doc: dict, key_: str = "id", flatten: bool = True) -> dic
     if flatten and len(new_doc) == 1 and key_ in new_doc:
         return new_doc[key_]
 
+    if "@context" in doc:
+        new_doc["@context"] = doc["@context"]
+
     return new_doc
 
 
 class JSONLDMixin:
-    def to_jsonld(self, profile) -> dict:
+    def to_jsonld(self, profile: str, context: str | dict | None = None) -> dict:
+        if context is None:
+            context = profile
+
         doc = json.loads(self.serialize(format="json-ld"))
 
         framed = jsonld.frame(doc, profile, options={"embed": "@always"})
-        compacted = jsonld.compact(framed, profile)
+        compacted = jsonld.compact(framed, context)
 
         return compacted
 
-    def to_activitystream(self, uri: str | None = None) -> dict:
-        doc = self.to_jsonld(AS_URI.removesuffix("#"))
+    def to_activitystream(self, uri: str | None = None, profile: str | None = None) -> dict:
+        if profile is None:
+            profile = "https://www.w3.org/ns/activitystreams"
+        # FIXME discover correct scope of context somehow
+        context = ["https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"]
+
+        doc = self.to_jsonld(profile, context)
         if uri:
             try:
                 doc = jsonld_cleanup_ids(jsonld_single(doc, uri))
