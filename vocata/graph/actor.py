@@ -128,32 +128,39 @@ class ActivityPubActorMixin:
             return None
         return str(uri)
 
-    def get_public_key_by_id(self, id_: rdflib.term.Identifier | str) -> str:
+    def get_public_key_by_id(self, id_: rdflib.term.Identifier | str) -> str | None:
         pem = self.value(subject=id_, predicate=SEC.publicKeyPem)
         if pem is None:
-            raise KeyError(f"Key {id_} not found or incomplete")
+            return None
 
         return str(pem)
 
-    def get_public_key(self, actor: rdflib.term.Identifier | str) -> tuple[str, str]:
+    def get_public_key(self, actor: rdflib.term.Identifier | str) -> tuple[str | None, str | None]:
         id_ = self.value(subject=actor, predicate=SEC.publicKey)
         if id_ is None:
-            raise KeyError(f"Key for {actor} not found or incomplete")
+            return None, None
 
         pem = self.get_public_key_by_id(id_)
         return str(id_), str(pem)
 
-    def get_private_key_by_id(self, id_: rdflib.term.Identifier | str) -> str:
+    def get_private_key_by_id(self, id_: rdflib.term.Identifier | str) -> str | None:
         pem = self.value(subject=id_, predicate=SEC.privateKeyPem)
         if pem is None:
-            raise KeyError(f"Key {id_} not found or incomplete")
+            return None
 
         return str(pem)
 
-    def get_private_key(self, actor: rdflib.term.Identifier | str) -> tuple[str, str]:
+    def get_actor_by_key_id(self, id_: rdflib.term.Identifier | str) -> str | None:
+        actor = self.value(subject=id_, predicate=SEC.owner | SEC.controller)
+        if actor is None:
+            return None
+
+        return str(actor)
+
+    def get_private_key(self, actor: rdflib.term.Identifier | str) -> tuple[str | None, str | None]:
         id_ = self.value(subject=actor, predicate=SEC.privateKey)
         if id_ is None:
-            raise KeyError(f"Key for {actor} not found or incomplete")
+            return None, None
 
         pem = self.get_private_key_by_id(id_)
 

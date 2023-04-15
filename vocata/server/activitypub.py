@@ -13,9 +13,7 @@ class ActivityPubEndpoint(HTTPEndpoint):
         self, request: Request, mode: AccessMode = AccessMode.READ
     ) -> bool | tuple[int, str]:
         # Check authorization
-        if request.state.graph.is_authorized(
-            request.state.actor, request.state.subject, mode
-        ):
+        if request.state.graph.is_authorized(request.state.actor, request.state.subject, mode):
             return True
         elif str(request.state.actor) == str(PUBLIC_ACTOR):
             return 401, "Unauthenticated actor"
