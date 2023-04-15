@@ -5,6 +5,11 @@ import rdflib
 from pyld import jsonld
 from rdflib.parser import PythonInputSource
 
+from .schema import AS
+
+_ALWAYS_INLINE = {AS.tag, AS.items, AS.object}
+_ALWAYS_LIST = {"tag", "items", "to", "bto", "cc", "bcc", "audience"}
+
 
 def jsonld_single(doc: dict, id_: str, key_: str = "id") -> dict:
     if "@graph" not in doc:
@@ -45,9 +50,15 @@ def jsonld_cleanup_ids(doc: dict, key_: str = "id", flatten: bool = True) -> dic
         elif isinstance(value, dict):
             new_value = jsonld_cleanup_ids(value, key_)
             if new_value:
-                new_doc[attr] = new_value
+                if attr in _ALWAYS_LIST:
+                    new_doc[attr] = [new_value]
+                else:
+                    new_doc[attr] = new_value
         elif attr != key_ or not value.startswith("_:"):
-            new_doc[attr] = value
+            if attr in _ALWAYS_LIST:
+                new_doc[attr] = [value]
+            else:
+                new_doc[attr] = value
 
     if flatten and len(new_doc) == 1 and key_ in new_doc:
         return new_doc[key_]
@@ -97,11 +108,14 @@ class JSONLDMixin:
             for s, p, o in new_cbd.triples((None, None, None)):
                 # We need to include objects with URI fragments,
                 #  they cannot be dereferenced remotely alone
-                if (
+                if p in _ALWAYS_INLINE:
+                    # FIXME reconsider properly
+                    subjects.add(o)
+                elif (
                     isinstance(o, rdflib.URIRef)
-                    and o.fragment
+                    and getattr(o, "fragment", False)
                     and o not in seen
-                    and o.startswith(s.removesuffix("#" + s.fragment) + "#")
+                    and o.startswith(s.removesuffix("#" + getattr(s, "fragment", "")) + "#")
                 ):
                     subjects.add(o)
             cbd += new_cbd

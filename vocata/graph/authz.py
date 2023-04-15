@@ -3,7 +3,7 @@ from enum import StrEnum
 import rdflib
 from rdflib.paths import ZeroOrMore
 
-from .schema import AS, LDP, SEC, VOC
+from .schema import AS, LDP, RDF, SEC, VOC
 
 # FIXME validate against spec
 HAS_AUDIENCE = AS.audience | AS.to | AS.bto | AS.cc | AS.bcc
@@ -52,6 +52,11 @@ class ActivityPubAuthzMixin:
     ) -> bool:
         return (actor, HAS_BOX, subject) in self and self.is_a_box(subject)
 
+    def is_mention_of(
+        self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str
+    ) -> bool:
+        return (subject, RDF.type, AS.Mention) in self and (subject, AS.href, actor) in self
+
     def is_authorized(
         self,
         actor: rdflib.URIRef | str,
@@ -78,6 +83,10 @@ class ActivityPubAuthzMixin:
             elif self.is_recipient(actor, subject):
                 # Direct recipients may see activities
                 action, reason = True, "is recipient of object"
+            elif self.is_mention_of(actor, subject):
+                # FIXME reconsider this properly
+                # Mentioned actors may see their mentions
+                action, reason = True, "is mention of actor"
         elif mode == AccessMode.WRITE:
             if self.is_box_owner(actor, subject):
                 # Owners of inboxes and outboxes can write to their boxes
