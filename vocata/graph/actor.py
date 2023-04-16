@@ -1,4 +1,5 @@
 import re
+from urllib.parse import urljoin
 
 import rdflib
 import shortuuid
@@ -15,6 +16,10 @@ ACCT_RE = f"{USERPART_RE}@{HOST_RE}"
 
 # FIXME should we use something else than users?
 LOCAL_ACTOR_URI_FORMAT = "https://{domain}/users/{local}"
+
+_DEFAULT_ENDPOINTS = {
+    "proxyUrl": "/_functional/proxy",
+}
 
 
 class ActivityPubActorMixin:
@@ -120,8 +125,47 @@ class ActivityPubActorMixin:
         self._logger.debug("Writing link between %s and %s for Webfinger", acct, actor_uri)
         self.set((rdflib.URIRef(f"acct:{acct}"), VOC.webfingerHref, actor_uri))
 
+        self._logger.debug("Linking prefix endpoints node to actor")
+        endpoints_node = self.get_prefix_endpoints_node(self.get_url_prefix(actor_uri), create=True)
+        self.set((actor_uri, AS.endpoints, endpoints_node))
+
         self._logger.info("Created actor for %s with ID %s", acct, actor_uri)
         return actor_uri
+
+    def get_prefix_endpoints_node(
+        self, prefix: str, create: bool = False
+    ) -> rdflib.term.BNode | None:
+        endpoints_node = self.value(subject=prefix, predicate=AS.endpoints)
+        if endpoints_node is None and create:
+            endpoints_node = self.reset_prefix_endpoints(prefix)
+        return endpoints_node
+
+    def set_prefix_endpoint(self, prefix: str, endpoint: str, url: str):
+        if not self.is_local_prefix(prefix):
+            raise ValueError(f"{prefix} is not a local prefix")
+
+        endpoints_node = self.get_prefix_endpoints_node(prefix)
+        if endpoints_node is None:
+            self.reset_prefix_endpoints(prefix)
+
+        self._logger.info("Setting endpoint %s of %s to %s", endpoint, prefix, url)
+        self.set((endpoints_node, AS[endpoint], rdflib.Literal(url)))
+
+    def reset_prefix_endpoints(self, prefix: str) -> rdflib.term.BNode:
+        if not self.is_local_prefix(prefix):
+            raise ValueError(f"{prefix} is not a local prefix")
+        self._logger.info("Resetting/creating endpoints node for prefix %s", prefix)
+
+        endpoints_node = self.get_prefix_endpoints_node(prefix)
+        if endpoints_node is None:
+            endpoints_node = rdflib.term.BNode()
+            self.set((rdflib.URIRef(prefix), AS.endpoints, endpoints_node))
+
+        self.remove((endpoints_node, None, None))
+        for endpoint, url_path in _DEFAULT_ENDPOINTS.items():
+            self.set_prefix_endpoint(prefix, endpoint, urljoin(prefix, url_path))
+
+        return endpoints_node
 
     def get_actor_uri_by_acct(self, acct: str) -> str | None:
         if not acct.startswith("acct"):

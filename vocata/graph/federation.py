@@ -13,24 +13,28 @@ from .schema import VOC
 CONTENT_TYPE = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
 
 
-def get_url_prefix(uri: str) -> rdflib.URIRef:
-    url = urlparse(uri)
-    if not url.scheme or not url.netloc:
-        raise ValueError(f"{uri} is missing either scheme or netloc")
-    return rdflib.URIRef(f"{url.scheme}://{url.netloc}")
-
-
 class ActivityPubFederationMixin:
     _http_session: Session | None = None
 
+    @staticmethod
+    def get_url_prefix(uri: str) -> rdflib.URIRef:
+        url = urlparse(uri)
+        if not url.scheme or not url.netloc:
+            raise ValueError(f"{uri} is missing either scheme or netloc")
+        return rdflib.URIRef(f"{url.scheme}://{url.netloc}")
+
     def is_local_prefix(self, prefix: str) -> bool:
-        uri = get_url_prefix(prefix)
+        uri = self.get_url_prefix(prefix)
         return (uri, VOC.isLocal, rdflib.Literal(True)) in self
 
     def set_local_prefix(self, prefix: str, is_local: bool = True):
-        uri = get_url_prefix(prefix)
+        uri = self.get_url_prefix(prefix)
         self._logger.info("Declaring %s a %slocal prefix", uri, "" if is_local else "(non-)")
         self.set((uri, VOC.isLocal, rdflib.Literal(is_local)))
+
+        if is_local:
+            self._logger.debug("Ensuring existence of prefix endpoints")
+            self.get_prefix_endpoints_node(prefix, create=True)
 
     @property
     def _user_agent(self):
