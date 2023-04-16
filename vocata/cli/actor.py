@@ -24,7 +24,7 @@ def create(
     actor_type: ActorType = typer.Option(ActorType.person, help="Actor type of new actor"),
 ):
     """Create a new local actor"""
-    graph = get_graph()
+    graph = get_graph(ctx.obj["settings"])
 
     if not graph.is_valid_acct(account):
         ctx.obj["log"].error("The account name %s is invalid", account)

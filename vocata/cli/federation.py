@@ -10,7 +10,7 @@ def push(
     ctx: typer.Context, activity_id: str = typer.Argument(..., help="ID (URL) of activity to push")
 ):
     """(Re-)push an activity with known ID"""
-    graph = get_graph()
+    graph = get_graph(ctx.obj["settings"])
 
     succeeded, failed = graph.push(activity_id)
 
@@ -24,7 +24,7 @@ def pull(
     activity_id: str = typer.Argument(..., help="ID (URL) of activity/object to pull"),
 ):
     """(Re-)pull an activity or object with known ID"""
-    graph = get_graph()
+    graph = get_graph(ctx.obj["settings"])
 
     success, _ = graph.pull(activity_id)
     if not success:

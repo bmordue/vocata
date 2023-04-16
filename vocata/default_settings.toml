@@ -1,0 +1,10 @@
+[log]
+level = "info"
+
+[graph.database]
+uri = "sqlite:///graph.db"
+
+[server]
+host = "127.0.0.1"
+port = 8044
+workers = 1
