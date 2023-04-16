@@ -8,12 +8,14 @@ import typer
 
 from ..settings import get_settings
 from . import actor
+from . import data
 from . import federation
 
 LogLevel = StrEnum("LogLevel", {name: name for name in logging.getLevelNamesMapping().keys()})
 
 app = typer.Typer()
 app.add_typer(actor.app, name="actor")
+app.add_typer(data.app, name="data")
 app.add_typer(federation.app, name="federation")
 
 

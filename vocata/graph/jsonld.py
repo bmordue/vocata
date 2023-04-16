@@ -121,17 +121,26 @@ class JSONLDMixin:
             cbd += new_cbd
         return cbd.filter_authorized(actor, self)
 
-    def add_jsonld(self, data: dict) -> rdflib.Graph:
+    def add_jsonld(self, data: dict, allow_non_local: bool = False) -> rdflib.Graph:
         # Parse into a new graph first, in case something fails
         new_g = rdflib.Graph()
         source = PythonInputSource(data, data["id"])
         new_g.parse(source, format="json-ld")
 
-        # Remvoe all statements about subject and add new
-        self._logger.debug("Replacing %s from JSON-LD document", data["id"])
-        self.remove((data["id"], None, None))
-        self += new_g
+        for s in set(new_g.subjects()):
+            # Sanity check new subgraph
+            if (
+                not allow_non_local
+                and not isinstance(s, rdflib.term.BNode)
+                and not self.is_local_prefix(s)
+            ):
+                raise KeyError(f"{s} is not in a local prefix")
 
+            # Remvoe all statements about subject and add new
+            self._logger.info("Replacing %s from JSON-LD document", s)
+            self.remove((s, None, None))
+
+        self += new_g
         return new_g
 
 
