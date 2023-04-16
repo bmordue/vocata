@@ -17,6 +17,9 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
             key_id = HTTPSignatureAuth.from_signed_request(request).verify_request(request)
             request.state.graph._logger.debug("Request is signed by key ID %s", key_id)
 
+            if not "Digest" in request.headers:
+                raise KeyError("Digest header is missing")
+
             actor = request.state.graph.get_actor_by_key_id(key_id)
             if not actor:
                 raise KeyError("Public key is not linked to an actor")

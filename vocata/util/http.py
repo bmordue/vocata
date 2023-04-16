@@ -171,6 +171,11 @@ class HTTPSignatureAuth(AuthBase):
             signature, signature_text.encode("utf-8"), padding.PKCS1v15(), hashes.SHA256()
         )
 
+        if "digest" in self._headers and request.body is not None:
+            digest = "SHA-256=" + b64encode(sha256(request.body).digest()).decode("utf-8")
+            if request.headers["Digest"] != digest:
+                raise ValueError("Digest of body is invalid")
+
         return signature_fields["keyId"]
 
     def __call__(self, request: Request) -> Request:
