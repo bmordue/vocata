@@ -71,7 +71,7 @@ class ActivityPubActorMixin:
 
         return key_subject
 
-    def create_actor_from_acct(self, acct: str, name: str, type_: str) -> str:
+    def create_actor_from_acct(self, acct: str, name: str, type_: str, force: bool) -> str:
         self._logger.debug("Creating actor from account name %s", acct)
 
         if not self.is_valid_acct(acct):
@@ -81,6 +81,9 @@ class ActivityPubActorMixin:
         actor_type = AS[type_.title()]
 
         actor_uri = rdflib.URIRef(LOCAL_ACTOR_URI_FORMAT.format(local=local, domain=domain))
+        if not self.is_local_prefix(str(actor_uri)) and not force:
+            raise ValueError(f"{domain} is not a local prefix")
+
         inbox_uri = rdflib.URIRef(f"{actor_uri}/inbox")
         outbox_uri = rdflib.URIRef(f"{actor_uri}/outbox")
         following_uri = rdflib.URIRef(f"{actor_uri}/following")

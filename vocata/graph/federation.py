@@ -1,17 +1,36 @@
 from importlib.metadata import metadata
 from pprint import pformat
+from urllib.parse import urlparse
 
+import rdflib
 from requests import Response, Session
 from requests.exceptions import JSONDecodeError
 
 from ..util.http import HTTPSignatureAuth
 from .authz import HAS_ACTOR, HAS_TRANSIENT_AUDIENCE, HAS_TRANSIENT_INBOXES, PUBLIC_ACTOR
+from .schema import VOC
 
 CONTENT_TYPE = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
 
 
+def get_url_prefix(uri: str) -> rdflib.URIRef:
+    url = urlparse(uri)
+    if not url.scheme or not url.netloc:
+        raise ValueError(f"{uri} is missing either scheme or netloc")
+    return rdflib.URIRef(f"{url.scheme}://{url.netloc}")
+
+
 class ActivityPubFederationMixin:
     _http_session: Session | None = None
+
+    def is_local_prefix(self, prefix: str) -> bool:
+        uri = get_url_prefix(prefix)
+        return (uri, VOC.isLocal, rdflib.Literal(True)) in self
+
+    def set_local_prefix(self, prefix: str, is_local: bool = True):
+        uri = get_url_prefix(prefix)
+        self._logger.info("Declaring %s a %slocal prefix", uri, "" if is_local else "(non-)")
+        self.set((uri, VOC.isLocal, rdflib.Literal(is_local)))
 
     @property
     def _user_agent(self):
@@ -58,8 +77,11 @@ class ActivityPubFederationMixin:
 
         return res
 
-    def pull(self, subject: str, actor: str = PUBLIC_ACTOR) -> tuple[bool, Response]:
-        # FIXME distinguish between local and remote
+    def pull(self, subject: str, actor: str = PUBLIC_ACTOR) -> tuple[bool, Response | None]:
+        if self.is_local_prefix(subject):
+            self._logger.debug("%s is a local prefix, skipping pull", subject)
+            return True, None
+
         self._logger.info("Pulling %s from remote", subject)
         # FIXME validate URL
         response = self._request("GET", subject, actor)
@@ -72,16 +94,24 @@ class ActivityPubFederationMixin:
 
         return response.status_code < 400, response
 
-    def push_to(self, target: str, subject: str, actor: str) -> tuple[bool, Response]:
+    def push_to(
+        self, target: str, subject: str, actor: str, skip_pull: bool = False
+    ) -> tuple[bool, Response | None]:
         self._logger.info("Pushing %s to remote %s", subject, target)
-        # FIXME do we really want to retrieve as `actor` here?
+
+        if not self.is_local_prefix(subject) and not skip_pull:
+            self._logger.info("Pulling %s first as it is non-local", subject)
+            succeeded, response = self.pull(subject, actor)
+            if not succeeded:
+                self._logger.warning("Pulling %s for re-pushing failed: %s", subject, response.text)
+
         data = self.activitystream_cbd(subject, actor).to_activitystream(subject)
         if not data:
-            # FIXME do we want to use this for re-pushing as well?
-            #  in that case, we should pull first
             raise KeyError(f"{subject} is unknown")
 
-        # FIXME test for locally owned targets here
+        if self.is_local_prefix(target):
+            self._logger.debug("Target %s is a local prefix, skipping push", target)
+            return True, None
         response = self._request("POST", target, actor, data)
 
         if response.status_code < 400:
@@ -91,12 +121,19 @@ class ActivityPubFederationMixin:
 
         return response.status_code < 400, response
 
-    def get_all_targets(self, subject: str, actor: str = PUBLIC_ACTOR) -> set[str]:
+    def get_all_targets(
+        self, subject: str, actor: str = PUBLIC_ACTOR, skip_pull: bool = False
+    ) -> set[str]:
         # FIXME we need to resolve for an actor!
         self._logger.debug("Resolving inboxes for audience of %s", subject)
 
-        # FIXME enable once we can distinguish local and remote
-        # self.pull(subject)
+        if not self.is_local_prefix(subject) and not skip_pull:
+            self._logger.info("Pulling %s first as it is non-local", subject)
+            succeeded, response = self.pull(subject, actor)
+            if not succeeded:
+                self._logger.warning(
+                    "Pulling %s for resolving audience failed: %s", subject, response.text
+                )
 
         audience = set()
         for _ in range(3):

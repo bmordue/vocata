@@ -21,9 +21,9 @@ class ActivityPubGraph(
         self._logger = logging.getLogger(__name__)
         super().__init__(*args, **kwargs)
 
-    def open(self, *args, **kwargs):
-        self._logger.debug("Opening graph store")
-        super().open(*args, **kwargs)
+    def open(self, database: str, *args, **kwargs):
+        self._logger.debug("Opening graph store from %s", database)
+        super().open(database, *args, **kwargs)
         self.setup_instance()
 
     def setup_instance(self):

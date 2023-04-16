@@ -6,6 +6,18 @@ app = typer.Typer(help="Manage federation of activities and objects")
 
 
 @app.command()
+def set_local_prefix(
+    ctx: typer.Context,
+    prefix: str = typer.Argument(..., help="URI prefix to manage, e.g. https://example.com"),
+    is_local: bool = typer.Option(True, help="Is prefix local or not"),
+):
+    """Set whether a URI prefix is local or not"""
+    graph = get_graph(ctx.obj["settings"])
+
+    graph.set_local_prefix(prefix)
+
+
+@app.command()
 def push(
     ctx: typer.Context, activity_id: str = typer.Argument(..., help="ID (URL) of activity to push")
 ):
