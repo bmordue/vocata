@@ -7,7 +7,7 @@ _DEFAULTS_FILE = Path(__file__).parent / "default_settings.toml"
 
 def get_settings(settings_files: str | list[str] = None, **overrides) -> LazySettings:
     if settings_files is None:
-        settings_files = ["/etc/vocata.toml", "/etc/vocata/*.toml"]
+        settings_files = ["/etc/vocata.toml", "/etc/vocata.d/*.toml"]
     elif isinstance(settings_files, str):
         settings_files = [settings_files]
 

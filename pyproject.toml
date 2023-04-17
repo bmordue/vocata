@@ -36,8 +36,8 @@ server = ["starlette", "uvicorn"]
 cli = ["typer"]
 
 [tool.poetry.scripts]
-vocata-cli = { callable = "vocata.cli:app", extras = ["cli"] }
-vocata-server = { callable = "vocata.server.server:run_server", extras = ["server"] }
+vocatactl = { callable = "vocata.cli:app", extras = ["cli"] }
+vocata = { callable = "vocata.server.server:run_server", extras = ["server"] }
 
 [tool.black]
 line-length = 100

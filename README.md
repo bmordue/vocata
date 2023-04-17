@@ -139,6 +139,51 @@ structures from the objects it handles, but plainly
 processes the graph operations defined by the protocol
 to traverse and transform its sub-graph of the Fediverse.
 
+## Running the Vocata server
+
+The server is a Python ASGI application built on top of
+[Starlette], using [Uvicorn] as ASGI server. For storing
+the graph, it can use any SQL database supported by
+[SQLAlchemy].
+
+### Installation
+
+To install the server, you can either use the [Poetry]
+tool also used for development, or install the `vocata`
+Python package into your own environment:
+
+```sh
+# Install using poetry
+git clone https://codeberg.org/Vocata/vocata
+cd vocata
+poetry install -E server -E cli
+poetry run vocata-server
+
+# Install using pip in your own environment
+pip install "vocata[server,cli]"
+vocata-server
+```
+
+The extras `server` and `cli` install the dependencies
+for running the server and the `vocata` binary;
+the `cli` extra installs the `vocatactl` control
+utiliy.
+
+### Configuration
+
+The server can be configured using either a configuration
+file in `/etc/vocata.toml` (or several files in `/etc/vocata.d/`,
+or using environment variables.
+
+In configuration files, use the [TOML] syntax. To use environment
+variables, translate the config keys into variable names of the form
+`VOC_group__subgroup__name` (for a key `group.subgroup.name`).
+
+For an example configuration file, the default configuration, and
+the documentation of the keys, see
+[the default_settings.toml file](./vocata/default_settings.toml) shipped
+with Vocata.
+
 ## The Vocata logo
 
 Vocata's logo reflects many of the concepts and assumptions
@@ -166,3 +211,8 @@ established above:
 [CBD]: https://www.w3.org/Submission/CBD/
 [rdflib]: https://rdflib.readthedocs.io/en/stable/
 [Sierpinski triangle]: https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle
+[Starlette]: https://www.starlette.io/
+[Uvicorn]: https://www.uvicorn.org/
+[SQLAlchemy]: https://www.sqlalchemy.org/
+[Poetry]: https://python-poetry.org/
+[TOML]: https://toml.io/en/
