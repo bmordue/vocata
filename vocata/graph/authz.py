@@ -8,6 +8,7 @@ from .schema import AS, LDP, RDF, SEC, VOC
 # FIXME validate against spec
 HAS_AUDIENCE = AS.audience | AS.to | AS.bto | AS.cc | AS.bcc
 HAS_TRANSIENT_AUDIENCE = HAS_AUDIENCE / (AS.items * ZeroOrMore)
+ACTOR_TYPES = {AS.Application, AS.Group, AS.Organization, AS.Person, AS.Service}
 # FIXME support shared inboxes
 HAS_TRANSIENT_INBOXES = HAS_TRANSIENT_AUDIENCE / LDP.inbox
 HAS_ACTOR = AS.actor
@@ -29,7 +30,7 @@ class ActivityPubAuthzMixin:
         return (None, HAS_BOX, subject) in self
 
     def is_an_actor(self, subject: rdflib.term.Identifier | str) -> bool:
-        return (None, AS.actor, subject) in self
+        return self.value(subject=subject, predicate=RDF.type) in ACTOR_TYPES or (None, AS.actor, subject) in self
 
     def is_an_actor_public_key(self, subject: rdflib.term.Identifier | str) -> bool:
         return (None, AS.actor / SEC.publicKey, subject) in self
