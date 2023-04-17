@@ -81,7 +81,7 @@ class JSONLDMixin:
 
         return compacted
 
-    def to_activitystream(self, uri: str | None = None, profile: str | None = None) -> dict:
+    def to_activitystreams(self, uri: str | None = None, profile: str | None = None) -> dict:
         if profile is None:
             profile = "https://www.w3.org/ns/activitystreams"
         # FIXME discover correct scope of context somehow
@@ -95,7 +95,7 @@ class JSONLDMixin:
                 doc = None
         return doc
 
-    def activitystream_cbd(self, uri: str, actor: str) -> Self:
+    def activitystreams_cbd(self, uri: str, actor: str) -> Self:
         self._logger.debug("Deriving CBD for %s as %s", uri, actor)
         cbd = self.__class__()
         subjects = {rdflib.URIRef(uri)}

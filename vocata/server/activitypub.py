@@ -26,9 +26,9 @@ class ActivityPubEndpoint(HTTPEndpoint):
             return JSONResponse({"error": auth[1]}, auth[0])
 
         # Retrieve the object identified by URI, passing actor for authorization
-        doc = request.state.graph.activitystream_cbd(
+        doc = request.state.graph.activitystreams_cbd(
             request.state.subject, request.state.actor
-        ).to_activitystream(request.state.subject)
+        ).to_activitystreams(request.state.subject)
 
         if doc is None:
             return JSONResponse({"error": "Not found"}, 404)

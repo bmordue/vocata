@@ -86,7 +86,7 @@ class ActivityPubFederationMixin:
             if not succeeded:
                 self._logger.warning("Pulling %s for re-pushing failed: %s", subject, response.text)
 
-        data = self.activitystream_cbd(subject, actor).to_activitystream(subject)
+        data = self.activitystreams_cbd(subject, actor).to_activitystreams(subject)
         if not data:
             raise KeyError(f"{subject} is unknown")
 
