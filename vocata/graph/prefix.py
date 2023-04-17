@@ -23,14 +23,17 @@ class ActivityPubPrefixMixin:
         uri = self.get_url_prefix(prefix)
         return (uri, VOC.isLocal, rdflib.Literal(True)) in self
 
-    def set_local_prefix(self, prefix: str, is_local: bool = True):
+    def set_local_prefix(self, prefix: str, is_local: bool = True, reset_endpoints: bool = True):
         uri = self.get_url_prefix(prefix)
         self._logger.info("Declaring %s a %slocal prefix", uri, "" if is_local else "(non-)")
         self.set((uri, VOC.isLocal, rdflib.Literal(is_local)))
 
         if is_local:
             self._logger.debug("Ensuring existence of prefix endpoints")
-            self.get_prefix_endpoints_node(prefix, create=True)
+            if reset_endpoints:
+                self.reset_prefix_endpoints(prefix)
+            else:
+                self.get_prefix_endpoints_node(prefix, create=True)
 
     def get_prefix_endpoints_node(
         self, prefix: str, create: bool = False

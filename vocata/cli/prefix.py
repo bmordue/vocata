@@ -17,6 +17,7 @@ def select_prefix(
 def set_local(
     ctx: typer.Context,
     is_local: bool = typer.Option(True, help="Is prefix local or not"),
+    reset_endpoints: bool = typer.Option(True, help="Reset endpoint URLs for prefix to defaults"),
     yes: bool = typer.Option(
         ...,
         help="Confirm action",
@@ -30,4 +31,4 @@ def set_local(
 
     graph = get_graph(ctx.obj["settings"])
 
-    graph.set_local_prefix(ctx.obj["current_prefix"], is_local)
+    graph.set_local_prefix(ctx.obj["current_prefix"], is_local, reset_endpoints)
