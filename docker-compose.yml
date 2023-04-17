@@ -1,0 +1,11 @@
+---
+version: '3.4'
+
+services:
+  vocata:
+    image: ${VOCATA_IMAGE:-vocata}:${VOCATA_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8044:8044"
