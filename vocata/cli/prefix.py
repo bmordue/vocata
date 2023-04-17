@@ -43,6 +43,9 @@ def set_endpoint(
         None, help="OAuth 2.0 Authorization endpoint"
     ),
     oauth_token_endpoint: Optional[str] = typer.Option(None, help="OAuth 2.0 Token endpoint"),
+    oauth_registration_endpoint: Optional[str] = typer.Option(
+        None, help="OAuth 2.0 Client Registration endpoint"
+    ),
     proxy_url: Optional[str] = typer.Option(None, help="Proxy for remote ActivityStreams"),
 ):
     """Configure external OAuth provider"""
@@ -58,6 +61,10 @@ def set_endpoint(
     if oauth_token_endpoint is not None:
         graph.set_prefix_endpoint(
             ctx.obj["current_prefix"], "oauthTokenEndpoint", oauth_token_endpoint
+        )
+    if oauth_registration_endpoint is not None:
+        graph.set_prefix_endpoint(
+            ctx.obj["current_prefix"], "oauthRegistrationEndpoint", oauth_registration_endpoint
         )
     if proxy_url is not None:
         graph.set_prefix_endpoint(ctx.obj["current_prefix"], "proxyUrl", proxy_url)
