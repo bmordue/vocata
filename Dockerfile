@@ -27,4 +27,4 @@ RUN apt-get -y purge git python3-pip && apt-get -y autoremove && apt-get -y clea
 RUN rm -rf /tmp/* /root/*
 
 EXPOSE 8044
-CMD ["/usr/local/bin/vocata-server"]
+CMD ["/usr/local/bin/vocata"]
