@@ -5,7 +5,6 @@ import shortuuid
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
-from passlib.hash import pbkdf2_sha256
 
 from .schema import AS, LDP, VOC, RDF, SEC
 
@@ -135,16 +134,6 @@ class ActivityPubActorMixin:
         if uri is None:
             return None
         return str(uri)
-
-    def set_actor_password(self, actor: str, password: str) -> None:
-        hash = pbkdf2_sha256.hash(password)
-        self.set((rdflib.URIRef(actor), VOC.hashedPassword, rdflib.Literal(hash)))
-
-    def verify_actor_password(self, actor: str, password: str) -> bool:
-        hash = self.value(subject=actor, predicate=VOC.hashedPassword)
-        if hash is None:
-            return False
-        return pbkdf2_sha256.verify(password, str(hash))
 
     def get_public_key_by_id(self, id_: rdflib.term.Identifier | str) -> str | None:
         pem = self.value(subject=id_, predicate=SEC.publicKeyPem)
