@@ -184,6 +184,33 @@ the documentation of the keys, see
 [the default_settings.toml file](./vocata/default_settings.toml) shipped
 with Vocata.
 
+### Setting up a domain (prefix)
+
+Domains are managed as URI prefixes in Vocata. As every object in
+[ActivityPub] has a unique ID, which maps directly to an HTTP URL,
+the server can determine the "domain" prefix by splitting the object
+ID after the hostname.
+
+In order to properly implement ActivityPub as a global social graph,
+Vocata stores all known objects in its graph store, but it only allows
+local management of objects under known local prefixes. That means
+that in order to use a domain with Vocata, you need to declare it
+a local prefix:
+
+```shell
+# Declare example.com a local prefix
+vocatactl prefix https://example.com set-local
+```
+
+From this point on, Vocata feels responsible for the prefix, and
+you can start using it by creating a local actor:
+
+```shell
+# Create actor test under the example.com domain,
+# with display name "Test User"
+vocatactl actor create test@example.com "Test User"
+```
+
 ## The Vocata logo
 
 Vocata's logo reflects many of the concepts and assumptions
