@@ -8,6 +8,7 @@ from ..settings import get_settings
 from .activitypub import ActivityPubEndpoint
 from .middleware import ActivityPubActorMiddleware
 from .nodeinfo import NodeInfoEndpoint, nodeinfo_wellknown
+from .oauth import OAuthMetadataEndpoint
 from .webfinger import WebfingerEndpoint
 
 settings = get_settings()
@@ -21,6 +22,7 @@ routes = [
         "/.well-known",
         routes=[
             Route("/nodeinfo", nodeinfo_wellknown, name="nodeinfo"),
+            Route("/oauth-authorization-server", OAuthMetadataEndpoint, name="oauth-metadata"),
             Route("/webfinger", WebfingerEndpoint, name="webfinger"),
         ],
         name="well_known",

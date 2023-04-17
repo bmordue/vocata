@@ -140,6 +140,17 @@ class ActivityPubActorMixin:
             endpoints_node = self.reset_prefix_endpoints(prefix)
         return endpoints_node
 
+    def get_prefix_endpoint(self, prefix: str, endpoint: str) -> str:
+        endpoints_node = self.get_prefix_endpoints_node(prefix)
+        if endpoints_node is None:
+            return None
+
+        url = self.value(subject=endpoints_node, predicate=AS[endpoint])
+        if url is None:
+            return None
+
+        return str(url)
+
     def set_prefix_endpoint(self, prefix: str, endpoint: str, url: str):
         if not self.is_local_prefix(prefix):
             raise ValueError(f"{prefix} is not a local prefix")
