@@ -23,7 +23,7 @@ RUN pip3 install --break-system-packages "/tmp/vocata-${VOCATA_VERSION}.tar.gz[s
 
 FROM runtime AS clean
 
-RUN apt-get -y purge git python3-pip && apt-get -y autoremove && apt-get -y clean
+RUN apt-get -y purge git && apt-get -y autoremove && apt-get -y clean
 RUN rm -rf /tmp/* /root/*
 
 EXPOSE 8044
