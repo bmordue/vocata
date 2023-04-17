@@ -106,8 +106,6 @@ class JSONLDMixin:
             seen.add(current_subject)
             new_cbd = self.cbd(current_subject, target_graph=self.__class__())
             for s, p, o in new_cbd.triples((None, None, None)):
-                # We need to include objects with URI fragments,
-                #  they cannot be dereferenced remotely alone
                 if p in _ALWAYS_INLINE:
                     # FIXME reconsider properly
                     subjects.add(o)
@@ -117,6 +115,8 @@ class JSONLDMixin:
                     and o not in seen
                     and o.startswith(s.removesuffix("#" + getattr(s, "fragment", "")) + "#")
                 ):
+                    # We need to include objects with URI fragments,
+                    #  they cannot be dereferenced remotely alone
                     subjects.add(o)
             cbd += new_cbd
         return cbd.filter_authorized(actor, self)
