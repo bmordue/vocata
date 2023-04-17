@@ -26,5 +26,6 @@ FROM runtime AS clean
 RUN apt-get -y purge git && apt-get -y autoremove && apt-get -y clean
 RUN rm -rf /tmp/* /root/*
 
+ENV VOC_server__host=0.0.0.0
 EXPOSE 8044
 CMD ["/usr/local/bin/vocata"]
