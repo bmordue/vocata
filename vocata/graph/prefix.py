@@ -58,11 +58,12 @@ class ActivityPubPrefixMixin:
             )
 
         endpoints_node = self.get_prefix_endpoints_node(prefix, create=True)
-        new_g = rdflib.Graph()
+        triples = set()
         for claim, endpoint_predicate in _CLAIM_ENDPOINT_MAP.items():
             self._logger.debug("Setting %s = %s", claim, config[claim])
-            new_g.add((endpoints_node, endpoint_predicate, rdflib.Literal(config[claim])))
-        self += new_g
+            triples.add((endpoints_node, endpoint_predicate, rdflib.Literal(config[claim])))
+        for triple in triples:
+            self.set(triple)
 
     def set_local_prefix(self, prefix: str, is_local: bool = True, reset_endpoints: bool = True):
         uri = self.get_url_prefix(prefix)
