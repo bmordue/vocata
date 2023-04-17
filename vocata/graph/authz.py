@@ -30,7 +30,10 @@ class ActivityPubAuthzMixin:
         return (None, HAS_BOX, subject) in self
 
     def is_an_actor(self, subject: rdflib.term.Identifier | str) -> bool:
-        return self.value(subject=subject, predicate=RDF.type) in ACTOR_TYPES or (None, AS.actor, subject) in self
+        return (
+            self.value(subject=subject, predicate=RDF.type) in ACTOR_TYPES
+            or (None, AS.actor, subject) in self
+        )
 
     def is_an_actor_public_key(self, subject: rdflib.term.Identifier | str) -> bool:
         return (None, AS.actor / SEC.publicKey, subject) in self
@@ -110,7 +113,7 @@ class ActivityPubAuthzMixin:
         new_g = self.__class__()
 
         for subject in self.subjects():
-            if root_graph.is_authorized(actor, subject):
+            if isinstance(subject, rdflib.term.BNode) or root_graph.is_authorized(actor, subject):
                 for s, p, o in self.triples((subject, None, None)):
                     if s in VOC or p in VOC or o in VOC:
                         # Never expose any triples involving local information scheme
