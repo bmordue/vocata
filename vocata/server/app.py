@@ -14,8 +14,8 @@ from .webfinger import WebfingerEndpoint
 settings = get_settings()
 
 middlewares = [
-    Middleware(ActivityPubActorMiddleware),
     Middleware(ProxyHeadersMiddleware, trusted_hosts=settings.server.trusted_proxies),
+    Middleware(ActivityPubActorMiddleware),
 ]
 routes = [
     Mount(
