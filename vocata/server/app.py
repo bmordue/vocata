@@ -1,6 +1,7 @@
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.routing import Mount, Route
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from ..graph import get_graph
 from ..settings import get_settings
@@ -9,7 +10,12 @@ from .middleware import ActivityPubActorMiddleware
 from .nodeinfo import NodeInfoEndpoint, nodeinfo_wellknown
 from .webfinger import WebfingerEndpoint
 
-middlewares = [Middleware(ActivityPubActorMiddleware)]
+settings = get_settings()
+
+middlewares = [
+    Middleware(ActivityPubActorMiddleware),
+    Middleware(ProxyHeadersMiddleware, trusted_hosts=settings.server.trusted_proxies),
+]
 routes = [
     Mount(
         "/.well-known",
@@ -29,7 +35,6 @@ routes = [
     Route("/{path:path}", ActivityPubEndpoint, methods=["GET", "POST"]),
 ]
 
-settings = get_settings()
 app = Starlette(middleware=middlewares, routes=routes)
 app.state.graph = get_graph(settings)
 

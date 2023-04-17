@@ -8,3 +8,4 @@ uri = "sqlite:///graph.db"
 host = "127.0.0.1"
 port = 8044
 workers = 1
+trusted_proxies=["127.0.0.1"]
