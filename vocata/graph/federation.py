@@ -69,7 +69,7 @@ class ActivityPubFederationMixin:
 
         if response.status_code == 200:
             self._logger.debug("Successfully pulled %s", subject)
-            self.add_jsonld(response.json())
+            self.add_jsonld(response.json(), allow_non_local=True)
         else:
             self._logger.error("Error pulling %s", subject)
 
