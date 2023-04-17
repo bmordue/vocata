@@ -7,12 +7,14 @@ from .actor import ActivityPubActorMixin
 from .authz import ActivityPubAuthzMixin
 from .federation import ActivityPubFederationMixin
 from .jsonld import JSONLDMixin
+from .prefix import ActivityPubPrefixMixin
 from .schema import RDF, VOC
 
 
 class ActivityPubGraph(
     rdflib.Graph,
     ActivityPubAuthzMixin,
+    ActivityPubPrefixMixin,
     ActivityPubActorMixin,
     JSONLDMixin,
     ActivityPubFederationMixin,
