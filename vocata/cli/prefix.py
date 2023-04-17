@@ -10,6 +10,7 @@ def select_prefix(
     ctx: typer.Context,
     prefix: str = typer.Argument(..., help="URI prefix to manage, e.g. https://example.com"),
 ):
+    # FIXME allow specifying URL or just domain
     ctx.obj["current_prefix"] = prefix
 
 
