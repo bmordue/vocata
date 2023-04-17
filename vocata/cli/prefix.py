@@ -32,3 +32,27 @@ def set_local(
     graph = get_graph(ctx.obj["settings"])
 
     graph.set_local_prefix(ctx.obj["current_prefix"], is_local, reset_endpoints)
+
+
+# FIXME rethink with a clear OIDC concept
+@app.command()
+def set_oauth_issuer(
+    ctx: typer.Context,
+    issuer: str = typer.Argument(..., help="Issuer URL of OAuth/OIDC issuer"),
+    yes: bool = typer.Option(
+        ...,
+        help="Confirm action",
+        prompt="Are you sure you want to change the issuer for the prefix?",
+        confirmation_prompt=True,
+    ),
+):
+    """Set OAuth/OIDC issuer for prefix"""
+    if not yes:
+        raise typer.Exit(code=1)
+
+    graph = get_graph(ctx.obj["settings"])
+
+    if not graph.is_local_prefix(ctx.obj["current_prefix"]):
+        raise typer.BadParameter(f"{ctx.obj['current_prefix']} is not a local prefix")
+
+    graph.set_prefix_oauth_issuer(ctx.obj["current_prefix"], issuer)

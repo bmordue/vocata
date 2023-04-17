@@ -1,13 +1,21 @@
 from urllib.parse import urljoin, urlparse
 
 import rdflib
+import requests
 
 from .schema import AS, VOC
 
-_DEFAULT_ENDPOINTS = {
-    "proxyUrl": "/_functional/proxy",
-    "oauthAuthorizationEndpoint": "/_functional/oauth/authorization",
-    "oauthTokenEndpoint": "/_functional/oauth/token",
+_OAUTH_METADATA_URIS = [
+    ".well-known/openid-configuration",
+    ".well-known/oauth-authorization-server",
+]
+
+_CLAIM_ENDPOINT_MAP = {
+    "issuer": AS.oauthIssuer,
+    "authorization_endpoint": AS.oauthAuthorizationEndpoint,
+    "token_endpoint": AS.oauthTokenEndpoint,
+    "registration_endpoint": AS.oauthRegistrationEndpoint,
+    "jwks_uri": AS.oauthJWKSUri,
 }
 
 
@@ -23,6 +31,39 @@ class ActivityPubPrefixMixin:
         uri = self.get_url_prefix(prefix)
         return (uri, VOC.isLocal, rdflib.Literal(True)) in self
 
+    # FIXME rethink with a clear OIDC concept
+    def set_prefix_oauth_issuer(self, prefix: str, issuer: str):
+        self._logger.debug("Setting OAuth issuer for %s to %s", prefix, issuer)
+
+        headers = {
+            "User-Agent": self._user_agent,
+            "Accept": "application/json",
+        }
+        config = {}
+        for path in _OAUTH_METADATA_URIS:
+            url = urljoin(f"{issuer}/", path)
+            self._logger.debug("Trying to fetch OAuth meta-data from %s", url)
+            result = requests.get(url, headers=headers)
+            if result.ok:
+                self._logger.debug("Found OAuth meta-data at %s", url)
+                config = result.json()
+                break
+            self._logger.debug("No OAuth meta-data at %s", url)
+
+        if "issuer" not in config:
+            raise KeyError("No (valid) OAuth meta-data found")
+        elif config["issuer"] != issuer:
+            raise ValueError(
+                "Issuer %s is different from expected issuer %s", config["issuer"], issuer
+            )
+
+        endpoints_node = self.get_prefix_endpoints_node(prefix, create=True)
+        new_g = rdflib.Graph()
+        for claim, endpoint_predicate in _CLAIM_ENDPOINT_MAP.items():
+            self._logger.debug("Setting %s = %s", claim, config[claim])
+            new_g.add((endpoints_node, endpoint_predicate, rdflib.Literal(config[claim])))
+        self += new_g
+
     def set_local_prefix(self, prefix: str, is_local: bool = True, reset_endpoints: bool = True):
         uri = self.get_url_prefix(prefix)
         self._logger.info("Declaring %s a %slocal prefix", uri, "" if is_local else "(non-)")
@@ -35,6 +76,7 @@ class ActivityPubPrefixMixin:
             else:
                 self.get_prefix_endpoints_node(prefix, create=True)
 
+    # FIXME rethink with a clear OIDC concept
     def get_prefix_endpoints_node(
         self, prefix: str, create: bool = False
     ) -> rdflib.term.BNode | None:
@@ -43,6 +85,7 @@ class ActivityPubPrefixMixin:
             endpoints_node = self.reset_prefix_endpoints(prefix)
         return endpoints_node
 
+    # FIXME rethink with a clear OIDC concept
     def get_prefix_endpoint(self, prefix: str, endpoint: str) -> str:
         endpoints_node = self.get_prefix_endpoints_node(prefix)
         if endpoints_node is None:
@@ -54,17 +97,7 @@ class ActivityPubPrefixMixin:
 
         return str(url)
 
-    def set_prefix_endpoint(self, prefix: str, endpoint: str, url: str):
-        if not self.is_local_prefix(prefix):
-            raise ValueError(f"{prefix} is not a local prefix")
-
-        endpoints_node = self.get_prefix_endpoints_node(prefix)
-        if endpoints_node is None:
-            self.reset_prefix_endpoints(prefix)
-
-        self._logger.info("Setting endpoint %s of %s to %s", endpoint, prefix, url)
-        self.set((endpoints_node, AS[endpoint], rdflib.Literal(url)))
-
+    # FIXME rethink with a clear OIDC concept
     def reset_prefix_endpoints(self, prefix: str) -> rdflib.term.BNode:
         if not self.is_local_prefix(prefix):
             raise ValueError(f"{prefix} is not a local prefix")
@@ -76,8 +109,6 @@ class ActivityPubPrefixMixin:
             self.set((rdflib.URIRef(prefix), AS.endpoints, endpoints_node))
 
         self.remove((endpoints_node, None, None))
-        for endpoint, url_path in _DEFAULT_ENDPOINTS.items():
-            self.set_prefix_endpoint(prefix, endpoint, urljoin(prefix, url_path))
 
         return endpoints_node
 
