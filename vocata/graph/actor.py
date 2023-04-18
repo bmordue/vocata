@@ -75,6 +75,7 @@ class ActivityPubActorMixin:
         return key_subject
 
     def create_actor_from_acct(self, acct: str, name: str, type_: str, force: bool) -> str:
+        # FIXME support auto-assigned ID
         self._logger.debug("Creating actor from account name %s", acct)
 
         if not self.is_valid_acct(acct):

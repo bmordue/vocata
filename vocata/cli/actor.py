@@ -36,6 +36,7 @@ def create(
     ),
 ):
     """Create a new local actor"""
+    # FIXME support auto-assigned ID
     graph = get_graph(ctx.obj["settings"])
     account = ctx.obj["current_account"]
 

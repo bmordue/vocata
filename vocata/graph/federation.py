@@ -78,6 +78,7 @@ class ActivityPubFederationMixin:
     def push_to(
         self, target: str, subject: str, actor: str, skip_pull: bool = False
     ) -> tuple[bool, Response | None]:
+        # FIXME should be asynchronous
         self._logger.info("Pushing %s to remote %s", subject, target)
 
         if not self.is_local_prefix(subject) and not skip_pull:
@@ -118,6 +119,7 @@ class ActivityPubFederationMixin:
 
         audience = set()
         for _ in range(3):
+            # FIXME only consider collections owned by the actor?
             new_audience = set(
                 map(str, self.objects(subject=subject, predicate=HAS_TRANSIENT_AUDIENCE))
             )
