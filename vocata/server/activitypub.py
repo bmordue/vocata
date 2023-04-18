@@ -21,6 +21,7 @@ class ActivityPubEndpoint(HTTPEndpoint):
             return 403, "Unauthorized"
 
     async def get(self, request: Request) -> JSONResponse:
+        # FIXME handle Accept header
         auth = self._check_auth(request, AccessMode.READ)
         if auth is not True:
             return JSONResponse({"error": auth[1]}, auth[0])
@@ -36,6 +37,7 @@ class ActivityPubEndpoint(HTTPEndpoint):
         return JSONResponse(doc)
 
     async def post(self, request: Request) -> JSONResponse:
+        # FIXME handle Accept header
         # POST target must be an inbox or outbox collection
         if not request.state.graph.is_a_box(request.state.actor):
             return JSONResponse({"error": "Not an inbox or outbox"}, 405)
