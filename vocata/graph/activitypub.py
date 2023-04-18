@@ -1,4 +1,7 @@
+# FIXME rename file
+
 import logging
+from typing import Iterator
 from uuid import uuid4
 
 import rdflib
@@ -51,5 +54,10 @@ class ActivityPubGraph(
             return None
         return str(self.instance_ref).split(":")[2]
 
+    def roots(self) -> Iterator[rdflib.term.Node]:
+        # FIXME try upstreaming to rdflib
+        for subject in self.subjects(unique=True):
+            if (None, None, subject) not in self:
+                yield subject
 
 __all__ = ["ActivityPubGraph"]

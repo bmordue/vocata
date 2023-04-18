@@ -96,6 +96,7 @@ class JSONLDMixin:
         return doc
 
     def activitystreams_cbd(self, uri: str, actor: str) -> Self:
+        # FIXME this is not precisely a CBD (also fix in README)
         self._logger.debug("Deriving CBD for %s as %s", uri, actor)
         cbd = self.__class__()
         subjects = {rdflib.URIRef(uri)}
