@@ -36,10 +36,12 @@ class ActivityPubEndpoint(HTTPEndpoint):
         return JSONResponse(doc)
 
     async def post(self, request: Request) -> JSONResponse:
+        # POST target must be an inbox or outbox collection
+        if not request.state.graph.is_a_box(request.state.actor):
+            return JSONResponse({"error": "Not an inbox or outbox"}, 405)
+
         auth = self._check_auth(request, AccessMode.WRITE)
         if auth is not True:
             return JSONResponse({"error": auth[1]}, auth[0])
 
-        # POST target must be an inbox or outbox collection
-        if not request.state.graph.is_a_box(request.state.actor):
-            return JSONResponse({"error": "Not an inbox or outbox"}, 405)
+        request.state.graph.handle_activity(request.json(), request.state.subject)

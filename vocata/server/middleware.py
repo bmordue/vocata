@@ -23,6 +23,8 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
             actor = request.state.graph.get_actor_by_key_id(key_id)
             if not actor:
                 raise KeyError("Public key is not linked to an actor")
+            # Ensure the actor is on the graph for later authorization
+            request.state.graph.pull(actor)
 
         return actor
 

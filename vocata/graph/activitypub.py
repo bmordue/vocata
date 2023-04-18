@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import rdflib
 
+from .activity import ActivityPubActivityMixin
 from .actor import ActivityPubActorMixin
 from .authz import ActivityPubAuthzMixin
 from .federation import ActivityPubFederationMixin
@@ -16,6 +17,7 @@ class ActivityPubGraph(
     ActivityPubAuthzMixin,
     ActivityPubPrefixMixin,
     ActivityPubActorMixin,
+    ActivityPubActivityMixin,
     JSONLDMixin,
     ActivityPubFederationMixin,
 ):

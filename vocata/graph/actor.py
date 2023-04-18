@@ -16,6 +16,9 @@ ACCT_RE = f"{USERPART_RE}@{HOST_RE}"
 # FIXME should we use something else than users?
 LOCAL_ACTOR_URI_FORMAT = "https://{domain}/users/{local}"
 
+# FIXME disover from a real schema
+ACTOR_TYPES = {AS.Application, AS.Group, AS.Organization, AS.Person, AS.Service}
+
 
 class ActivityPubActorMixin:
     @staticmethod

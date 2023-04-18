@@ -3,12 +3,12 @@ from enum import StrEnum
 import rdflib
 from rdflib.paths import ZeroOrMore
 
+from .actor import ACTOR_TYPES
 from .schema import AS, LDP, RDF, SEC, VOC
 
 # FIXME validate against spec
 HAS_AUDIENCE = AS.audience | AS.to | AS.bto | AS.cc | AS.bcc
 HAS_TRANSIENT_AUDIENCE = HAS_AUDIENCE / (AS.items * ZeroOrMore)
-ACTOR_TYPES = {AS.Application, AS.Group, AS.Organization, AS.Person, AS.Service}
 # FIXME support shared inboxes
 HAS_TRANSIENT_INBOXES = HAS_TRANSIENT_AUDIENCE / LDP.inbox
 HAS_ACTOR = AS.actor
@@ -29,8 +29,14 @@ class ActivityPubAuthzMixin:
     def is_a_box(self, subject: rdflib.term.Identifier | str) -> bool:
         return (None, HAS_BOX, subject) in self
 
+    def is_an_inbox(self, subject: rdflib.term.Identifier | str) -> bool:
+        return (None, AS.inbox, subject) in self
+
+    def is_an_outbox(self, subject: rdflib.term.Identifier | str) -> bool:
+        return (None, AS.outbox, subject) in self
+
     def is_an_actor(self, subject: rdflib.term.Identifier | str) -> bool:
-        return (
+        return subject != PUBLIC_ACTOR and (
             self.value(subject=subject, predicate=RDF.type) in ACTOR_TYPES
             or (None, AS.actor, subject) in self
         )
@@ -95,6 +101,9 @@ class ActivityPubAuthzMixin:
             if self.is_box_owner(actor, subject):
                 # Owners of inboxes and outboxes can write to their boxes
                 action, reason = True, "is owner of box collection"
+            elif self.is_an_actor(actor) and self.is_an_inbox(subject):
+                # Inboxes are generally writable to all authenticated actors
+                action, reason = True, "is an inbox and actor is authenticated"
 
         action_name = "Grant" if action else "Deny"
         self._logger.debug(

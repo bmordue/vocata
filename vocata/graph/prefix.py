@@ -2,8 +2,9 @@ from urllib.parse import urljoin, urlparse
 
 import rdflib
 import requests
+import shortuuid
 
-from .schema import AS, VOC
+from .schema import AS, RDF, VOC
 
 _OAUTH_METADATA_URIS = [
     ".well-known/openid-configuration",
@@ -112,6 +113,27 @@ class ActivityPubPrefixMixin:
         self.remove((endpoints_node, None, None))
 
         return endpoints_node
+
+    def generate_id(self, subject: str, prefix: str, fallback_ns: str = "Object") -> rdflib.URIRef:
+        type_ = self.value(subject=subject, predicate=RDF.type) or fallback_ns
+
+        uri_ns = type_.fragment.lower()
+        uri_name = shortuuid.uuid()
+
+        new_id = urljoin(urljoin(prefix, f"/{uri_ns}/"), uri_name)
+        return rdflib.URIRef(new_id)
+
+    def reassign_id(self, subject: str, prefix: str, fallback_ns: str = "Object") -> rdflib.URIRef:
+        new_id = self.generate_id(subject, prefix, fallback_ns)
+        self._logger.debug("Replacing subjects with ID %S with %s", subject, new_id)
+
+        for _, p, o in self.triples((subject, None, None)):
+            self.add((new_id, p, o))
+
+        for s, p, _ in self.triples((None, None, subject)):
+            self.add((s, p, new_id))
+
+        return new_id
 
 
 __all__ = ["ActivityPubPrefixMixin"]
