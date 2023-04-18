@@ -3,8 +3,7 @@ from enum import StrEnum
 import rdflib
 from rdflib.paths import ZeroOrMore
 
-from .actor import ACTOR_TYPES
-from .schema import AS, LDP, RDF, SEC, VOC
+from .schema import ACTOR_TYPES, AS, LDP, RDF, SEC, VOC
 
 # FIXME validate against spec
 HAS_AUDIENCE = AS.audience | AS.to | AS.bto | AS.cc | AS.bcc

@@ -16,9 +16,6 @@ ACCT_RE = f"{USERPART_RE}@{HOST_RE}"
 # FIXME should we use something else than users?
 LOCAL_ACTOR_URI_FORMAT = "https://{domain}/users/{local}"
 
-# FIXME disover from a real schema
-ACTOR_TYPES = {AS.Application, AS.Group, AS.Organization, AS.Person, AS.Service}
-
 
 class ActivityPubActorMixin:
     @staticmethod
@@ -75,7 +72,7 @@ class ActivityPubActorMixin:
         return key_subject
 
     def create_actor_from_acct(self, acct: str, name: str, type_: str, force: bool) -> str:
-        # FIXME support auto-assigned ID
+        # FIXME support auto-assigned ID, probably using alsoKnownAs
         self._logger.debug("Creating actor from account name %s", acct)
 
         if not self.is_valid_acct(acct):
@@ -122,6 +119,7 @@ class ActivityPubActorMixin:
         self.generate_actor_keypair(actor_uri)
 
         self._logger.debug("Writing link between %s and %s for Webfinger", acct, actor_uri)
+        # FIXME probably use alsoKnownAs
         self.set((rdflib.URIRef(f"acct:{acct}"), VOC.webfingerHref, actor_uri))
 
         self._logger.debug("Linking prefix endpoints node to actor")
