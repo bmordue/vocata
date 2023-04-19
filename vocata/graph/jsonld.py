@@ -109,6 +109,7 @@ class JSONLDMixin:
             for s, p, o in new_cbd.triples((None, None, None)):
                 if p in _ALWAYS_INLINE:
                     # FIXME reconsider properly
+                    #  cf. https://socialhub.activitypub.rocks/t/if-inbox-posts-were-cbds/3123
                     subjects.add(o)
                 elif (
                     isinstance(o, rdflib.URIRef)
