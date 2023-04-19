@@ -90,5 +90,10 @@ class ActivityPubActivityMixin:
 
         return activity
 
+    async def carry_out_activity(self, activity: str):
+        self._logger.info("Carrying out activity %s", activity)
+
+        raise NotImplementedError()
+
 
 __all__ = ["ActivityPubActivityMixin"]

@@ -1,3 +1,4 @@
+from starlette.background import BackgroundTask
 from starlette.endpoints import HTTPEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -58,7 +59,8 @@ class ActivityPubEndpoint(HTTPEndpoint):
             # FIXME distinguish 4xx and 5xx by exception status
             return JSONResponse({"error": str(ex)}, 400)
 
-        # FIXME return correct content type
-        return JSONResponse({}, 201, headers={"Location": str(new_uri)})
+        # Side-effects of activities are carried out afterwards
+        task = BackgroundTask(request.state.graph.carry_out_activity, activity=new_uri)
 
-        # FIXME add background task here
+        # FIXME return correct content type
+        return JSONResponse({}, 201, headers={"Location": str(new_uri)}, background=task)
