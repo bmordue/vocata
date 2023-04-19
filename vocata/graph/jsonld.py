@@ -5,9 +5,6 @@ import rdflib
 from pyld import jsonld
 from rdflib.parser import PythonInputSource
 
-from .schema import AS
-
-_ALWAYS_INLINE = {AS.tag, AS.items, AS.object}
 _ALWAYS_LIST = {"tag", "items", "to", "bto", "cc", "bcc", "audience"}
 
 
@@ -107,11 +104,7 @@ class JSONLDMixin:
             seen.add(current_subject)
             new_cbd = self.cbd(current_subject, target_graph=self.__class__())
             for s, p, o in new_cbd.triples((None, None, None)):
-                if p in _ALWAYS_INLINE:
-                    # FIXME reconsider properly
-                    #  cf. https://socialhub.activitypub.rocks/t/if-inbox-posts-were-cbds/3123
-                    subjects.add(o)
-                elif (
+                if (
                     isinstance(o, rdflib.URIRef)
                     and getattr(o, "fragment", False)
                     and o not in seen
