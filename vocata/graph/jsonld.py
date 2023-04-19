@@ -5,6 +5,8 @@ import rdflib
 from pyld import jsonld
 from rdflib.parser import PythonInputSource
 
+from .schema import AS_URI
+
 _ALWAYS_LIST = {"tag", "items", "to", "bto", "cc", "bcc", "audience"}
 
 
@@ -117,6 +119,18 @@ class JSONLDMixin:
         return cbd.filter_authorized(actor, self)
 
     def add_jsonld(self, data: dict, allow_non_local: bool = False) -> rdflib.Graph:
+        # ActivityStreams context must be assumed if no context is provided
+        context = data.get("@context", None)
+        norm_context = AS_URI.removesuffix("#")
+        if context is None:
+            data["@context"] = norm_context
+        elif isinstance(context, str) and context != norm_context:
+            data["@context"] = [context, norm_context]
+        elif isinstance(context, list) and norm_context not in context:
+            data["@cotnext"].append(norm_context)
+        elif isinstance(context, dict) and norm_context not in context.values():
+            data["@context"]["as"] = norm_context
+
         # Parse into a new graph first, in case something fails
         new_g = rdflib.Graph()
         source = PythonInputSource(data, data["id"])
