@@ -133,6 +133,7 @@ class JSONLDMixin:
 
         # Parse into a new graph first, in case something fails
         new_g = rdflib.Graph()
+        # FIXME ship normative context to not load it remotely every time
         source = PythonInputSource(data, data["id"])
         new_g.parse(source, format="json-ld")
 
