@@ -129,9 +129,11 @@ class ActivityPubPrefixMixin:
 
         for _, p, o in self.triples((subject, None, None)):
             self.add((new_id, p, o))
+            self.remove((subject, p, o))
 
         for s, p, _ in self.triples((None, None, subject)):
             self.add((s, p, new_id))
+            self.remove((s, p, subject))
 
         return new_id
 
