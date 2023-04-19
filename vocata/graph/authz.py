@@ -29,7 +29,7 @@ class ActivityPubAuthzMixin:
         return (None, HAS_BOX, subject) in self
 
     def is_an_inbox(self, subject: rdflib.term.Identifier | str) -> bool:
-        return (None, AS.inbox, subject) in self
+        return (None, LDP.inbox, subject) in self
 
     def is_an_outbox(self, subject: rdflib.term.Identifier | str) -> bool:
         return (None, AS.outbox, subject) in self
