@@ -83,7 +83,11 @@ class ActivityPubActivityMixin:
         new_cbd.set((activity, VOC.processed, rdflib.Literal(False)))
 
         # Merge into main graph
-        #  Side effects will be carried out separately
+        #  As we ensured to handle a CBD above, we can be certain not to
+        #  override or add subjects here. All additions to the graph
+        #  except for the activity will be carried out as side effect,
+        #  with a clean pull from the authoritative origin.
+        # Side effects will be carried out separately
         self += new_cbd
         self.add_to_collection(target, activity)
         self._logger.info("Activity %s added to graph", activity)
