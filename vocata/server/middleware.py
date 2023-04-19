@@ -31,6 +31,9 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         request.state.graph = request.app.state.graph
 
+        # FIXME fix timeout for real
+        request.state.json = await request.json()
+
         try:
             request.state.actor = await self.determine_actor(request)
         except Exception as ex:

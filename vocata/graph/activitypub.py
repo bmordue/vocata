@@ -9,6 +9,7 @@ import rdflib
 from .activity import ActivityPubActivityMixin
 from .actor import ActivityPubActorMixin
 from .authz import ActivityPubAuthzMixin
+from .collections import ActivityPubCollectionsMixin
 from .federation import ActivityPubFederationMixin
 from .jsonld import JSONLDMixin
 from .prefix import ActivityPubPrefixMixin
@@ -19,6 +20,7 @@ class ActivityPubGraph(
     rdflib.Graph,
     ActivityPubAuthzMixin,
     ActivityPubPrefixMixin,
+    ActivityPubCollectionsMixin,
     ActivityPubActorMixin,
     ActivityPubActivityMixin,
     JSONLDMixin,
@@ -59,5 +61,6 @@ class ActivityPubGraph(
         for subject in self.subjects(unique=True):
             if (None, None, subject) not in self:
                 yield subject
+
 
 __all__ = ["ActivityPubGraph"]
