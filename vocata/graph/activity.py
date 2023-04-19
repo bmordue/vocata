@@ -28,10 +28,6 @@ class ActivityPubActivityMixin:
         #  subgraph is "rooted" (it has a node which appears
         #  only as subject and never as object) and connected
         #  (all nodes can be reached from there)
-        # By verifying this early, we can later rely on the
-        #  subgraph not containing any statements we did not
-        #  expect after logically verifying the activity
-        # FIXME formalize together with the activitystreams_cbd method
         roots = set(new_g.roots())
         if len(roots) != 1:
             raise TypeError("The activity graph must have exactly one root")
@@ -39,7 +35,13 @@ class ActivityPubActivityMixin:
             raise TypeError("The activity graph must be connected")
         root = roots.pop()
 
-        root_type = new_g.value(subject=root, predicate=RDF.type)
+        # Work on the CBD (Concise Bounded Description) of the root
+        #  node from here. This ensures we are not receiving spoofed
+        #  publicly dereferencable objects; we will pull any referenced
+        #  objects again later
+        new_cbd = new_g.cbd(root)
+
+        root_type = new_cbd.value(subject=root, predicate=RDF.type)
         if root_type in OBJECT_TYPES:
             # If the root is an object, assume a Create activity
             # FIXME implement
