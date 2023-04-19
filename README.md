@@ -63,7 +63,7 @@ receive content to and from the [Fediverse] with an
 identity, and handles federation with other servers on
 behalf of users.
 
-With an account, on a Vocata server, a user gains access
+With an account on a Vocata server, a user gains access
 to the [Fediverse] with a chosen identity, and can then use
 any client to act with that identity.
 
@@ -77,7 +77,7 @@ protocol, builds on a very well-established foundation.
 ### ActivityStreams: The social graph
 
 The content on the [Fediverse], technically defined by the
-[ActivityStreams] vocabulary, comprise the *social graph*.
+[ActivityStreams] vocabulary, comprises the *social graph*.
 
 This social graph is, from an information science perspective,
 a *directed graph*, consisting of *triple statements* describing
