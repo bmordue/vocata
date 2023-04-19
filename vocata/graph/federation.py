@@ -126,7 +126,7 @@ class ActivityPubFederationMixin:
             if audience == new_audience:
                 break
             for recipient in new_audience:
-                if recipient != PUBLIC_ACTOR and recipient not in audience:
+                if str(recipient) != str(PUBLIC_ACTOR) and recipient not in audience:
                     self.pull(recipient, actor)
             audience = new_audience
 
