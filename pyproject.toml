@@ -33,6 +33,15 @@ black = "^23.3.0"
 [tool.poetry.group.test.dependencies]
 pytest = "^7.3.1"
 
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.4.2"
+mkdocstrings = { version = "^0.21.2", extras = ["python"] }
+mkdocs-mermaid2-plugin = "^0.6.0"
+
 [tool.poetry.extras]
 server = ["starlette", "uvicorn", "oic", "passlib"]
 cli = ["typer"]
