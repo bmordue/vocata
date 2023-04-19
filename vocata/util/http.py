@@ -74,7 +74,7 @@ class HTTPSignatureAuth(AuthBase):
             self._public_key = crypto_serialization.load_pem_public_key(
                 self._public_key_pem.encode("utf-8"), backend=crypto_default_backend()
             )
-            self._graph._logger.debug("Public key with ID %s not found", self._key_id)
+            self._graph._logger.debug("Public key with ID %s found", self._key_id)
         else:
             self._public_key = None
             self._graph._logger.warning("Public key with ID %s not found", self._key_id)
@@ -158,7 +158,7 @@ class HTTPSignatureAuth(AuthBase):
         headers_text = " ".join(used_headers)
         return signature_text, headers_text
 
-    def verify_request(self, request: Request) -> str:
+    async def verify_request(self, request: Request) -> str:
         signature_text, headers_text = self.construct_signature_data(request)
 
         if headers_text != " ".join(self._headers):
@@ -172,7 +172,8 @@ class HTTPSignatureAuth(AuthBase):
         )
 
         if "digest" in self._headers and request.body is not None:
-            digest = "SHA-256=" + b64encode(sha256(request.body).digest()).decode("utf-8")
+            body = await request.body()
+            digest = "SHA-256=" + b64encode(sha256(body).digest()).decode("utf-8")
             if request.headers["Digest"] != digest:
                 raise ValueError("Digest of body is invalid")
 

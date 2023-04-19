@@ -9,12 +9,12 @@ from ..util.http import HTTPSignatureAuth
 
 
 class ActivityPubActorMiddleware(BaseHTTPMiddleware):
-    def determine_actor(self, request: Request) -> str:
+    async def determine_actor(self, request: Request) -> str:
         actor = PUBLIC_ACTOR
 
         if "Signature" in request.headers:
             request.state.graph._logger.debug("Request has Signature header")
-            key_id = HTTPSignatureAuth.from_signed_request(request).verify_request(request)
+            key_id = await HTTPSignatureAuth.from_signed_request(request).verify_request(request)
             request.state.graph._logger.debug("Request is signed by key ID %s", key_id)
 
             if request.method == "POST" and "Digest" not in request.headers:
@@ -32,7 +32,7 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
         request.state.graph = request.app.state.graph
 
         try:
-            request.state.actor = self.determine_actor(request)
+            request.state.actor = await self.determine_actor(request)
         except Exception as ex:
             return JSONResponse({"error": str(ex)}, 401)
         request.state.graph._logger.info("Actor was determined as %s", request.state.actor)
