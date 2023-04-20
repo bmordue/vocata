@@ -96,8 +96,16 @@ class ActivityPubActivityMixin:
 
         return activity
 
-    async def carry_out_activity(self, activity: str):
+    async def carry_out_activity(self, activity: str, force: bool = False):
         self._logger.info("Carrying out activity %s", activity)
+
+        type_ = self.value(subject=activity, predicate=VOC.processed)
+        if type_ not in ACTIVITY_TYPES:
+            raise TypeError(f"{activity} is not an activity type")
+
+        processed = self.value(subject=activity, predicate=VOC.processed, default=False)
+        if processed and not force:
+            raise ValueError(f"Activity {activity} already processed")
 
         raise NotImplementedError()
 
