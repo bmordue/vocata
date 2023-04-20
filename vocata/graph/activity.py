@@ -120,13 +120,19 @@ class ActivityPubActivityMixin:
             self._logger.debug("Activity touches %s, pulling", touch)
             self.pull(touch, recipient)
 
+        actor = self.value(subject=activity, predicate=AS.actor, default=PUBLIC_ACTOR)
+
+        object_ = self.value(subject=activity, predicate=AS.object)
+        if object_ is None:
+            raise KeyError(f"Activity {activity} does not have an object")
+
         func_name = f"carry_out_{type_.fragment.lower()}"
         func = getattr(self, func_name, None)
         if func is None:
             raise NotImplementedError()
 
         try:
-            results = func(activity, recipient)
+            results = func(activity, actor, object_, recipient)
         # FIXME use proper exception handling
         except Exception as ex:
             self.set((activity, VOC.processRessult, rdflib.Literal(str(ex))))
@@ -137,22 +143,108 @@ class ActivityPubActivityMixin:
         self.set((activity, VOC.processed, rdflib.Literal(True)))
         self.set((activity, VOC.processedAt, rdflib.Literal(datetime.now())))
 
+    def carry_out_accept(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        object_: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        object_type = self.value(subject=object_, predicate=RDF.type)
+        if object_type is None:
+            raise TypeError(f"{object_} has no type")
+
+        # We might have a handler for accepting this type of object
+        func_name = f"carry_out_accept_{object_type.fragment.lower()}"
+        func = getattr(self, func_name, None)
+        if func is None:
+            return {"no side effects to carry out"}
+        return func(activity, actor, object_, recipient)
+
+    def carry_out_accept_follow(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        follow_activity: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        followed_object = self.value(subject=follow_activity, predicate=AS.object)
+        if followed_object is None:
+            raise ValueError(f"Original follow activity {follow_activity} has no object")
+
+        if not self.is_authorized(actor, followed_object, AccessMode.ACCEPT_FOLLOW):
+            # FIXME use proper exception
+            raise Exception(f"Actoor {actor} is not authorized to accept {follow_activity}")
+
+        collection = self.value(subject=recipient, predicate=AS.following)
+        if collection is None:
+            # FIXME create collection
+            self._logger.warning("Actor %s does not have a following collection", recipient)
+            return {f"{recipient} does not have following collection; no side effects to carry out"}
+
+        self.add_to_collection(collection, actor)
+        return {f"actor added to following collection of {recipient}"}
+
+    def carry_out_reject(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        object_: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        object_type = self.value(subject=object_, predicate=RDF.type)
+        if object_type is None:
+            raise TypeError(f"{object_} has no type")
+
+        # We might have a handler for accepting this type of object
+        func_name = f"carry_out_reject_{object_type.fragment.lower()}"
+        func = getattr(self, func_name, None)
+        if func is None:
+            return {"no side effects to carry out"}
+        return func(activity, actor, object_, recipient)
+
+    def carry_out_reject_follow(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        follow_activity: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        followed_object = self.value(subject=follow_activity, predicate=AS.object)
+        if followed_object is None:
+            raise ValueError(f"Original follow activity {follow_activity} has no object")
+
+        if not self.is_authorized(actor, followed_object, AccessMode.REJECT_FOLLOW):
+            # FIXME use proper exception
+            raise Exception(f"Actoor {actor} is not authorized to reject {follow_activity}")
+
+        collection = self.value(subject=recipient, predicate=AS.following)
+        if collection is None:
+            # FIXME create collection
+            self._logger.warning("Actor %s does not have a following collection", recipient)
+            return {f"{recipient} does not have following collection; no side effects to carry out"}
+
+        self.remove_from_collection(collection, actor)
+        return {f"actor removed from following collection of {recipient}"}
+
     def carry_out_create(
-        self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        object_: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
     ) -> set[str]:
         # The activity has been added to the inbox already
         #  and the object has been pulled already
         return {"no side effects to carry out"}
 
     def carry_out_delete(
-        self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        object_: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
     ) -> set[str]:
-        actor = self.value(subject=activity, predicate=AS.actor, default=PUBLIC_ACTOR)
-
-        object_ = self.value(subject=activity, predicate=AS.object)
-        if object_ is None:
-            raise KeyError(f"Activity {activity} does not have an object")
-
         if not self.is_authorized(actor, object_, AccessMode.DELETE):
             # FIXME use proper exception
             raise Exception(f"Actoor {actor} is not authorized to delete {object_}")
@@ -167,14 +259,22 @@ class ActivityPubActivityMixin:
         return {f"replaced {object_} with tombstone"}
 
     def carry_out_follow(
-        self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        object_: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
     ) -> set[str]:
         # The activity has been added to the inbox already
         #  and we don't want to auto-accept for now
         return {"no side effects to carry out"}
 
     def carry_out_update(
-        self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        object_: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
     ) -> set[str]:
         # The object has been pulled already
         return {"no side effects to carry out"}

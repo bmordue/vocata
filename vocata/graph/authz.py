@@ -23,6 +23,7 @@ class AccessMode(StrEnum):
     READ = "read"
     WRITE = "write"
     DELETE = "delete"
+    ACCEPT_FOLLOW = "accept_follow"
 
 
 class ActivityPubAuthzMixin:
@@ -117,6 +118,10 @@ class ActivityPubAuthzMixin:
                 # Origins may delete objects they are responsible for
                 # FIXME reconsider
                 action, reason = True, "actor is at origin server"
+        elif mode == AccessMode.ACCEPT_FOLLOW:
+            if actor == subject:
+                # Actors can accept follows for themselves
+                action, reason = True, "actor is followed subject"
 
         action_name = "Grant" if action else "Deny"
         self._logger.debug(
