@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import rdflib
 
-from .authz import PUBLIC_ACTOR
+from .authz import AccessMode, PUBLIC_ACTOR
 from .schema import ACTIVITY_TOUCHES, ACTIVITY_TYPES, AS, OBJECT_TYPES, RDF, VOC
 
 if TYPE_CHECKING:
@@ -140,11 +140,43 @@ class ActivityPubActivityMixin:
     def carry_out_create(
         self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR
     ) -> set[str]:
+        # The activity has been added to the inbox already
+        #  and the object has been pulled already
         return {"no side effects to carry out"}
+
+    def carry_out_delete(
+        self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR
+    ) -> set[str]:
+        actor = self.value(subject=activity, predicate=AS.actor, default=PUBLIC_ACTOR)
+
+        object_ = self.value(subject=activity, predicate=AS.object)
+        if object_ is None:
+            raise KeyError(f"Activity {activity} does not have an object")
+
+        if not self.is_authorized(actor, object_, AccessMode.DELETE):
+            # FIXME use proper exception
+            raise Exception(f"Actoor {actor} is not authorized to delete {object_}")
+
+        self._logger.info("Removing %s from graph", object_)
+        self.remove((object_, None, None))
+
+        self._logger.debug("Synthesizing tombstone at %s", object_)
+        # FIXME should we set a deleted date?
+        self.set((rdflib.URIRef(object_), RDF.type, AS.Tombstone))
+
+        return {f"replaced {object_} with tombstone"}
 
     def carry_out_follow(
         self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR
     ) -> set[str]:
+        # The activity has been added to the inbox already
+        #  and we don't want to auto-accept for now
+        return {"no side effects to carry out"}
+
+    def carry_out_update(
+        self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR
+    ) -> set[str]:
+        # The object has been pulled already
         return {"no side effects to carry out"}
 
 

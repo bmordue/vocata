@@ -22,6 +22,7 @@ HIDE_PREDICATES = {AS.bto, AS.bcc, SEC.privateKey, SEC.privateKeyPem}
 class AccessMode(StrEnum):
     READ = "read"
     WRITE = "write"
+    DELETE = "delete"
 
 
 class ActivityPubAuthzMixin:
@@ -66,6 +67,11 @@ class ActivityPubAuthzMixin:
     ) -> bool:
         return (subject, RDF.type, AS.Mention) in self and (subject, AS.href, actor) in self
 
+    def is_same_prefix(
+        self, subject_a: rdflib.term.Identifier | str, subject_b: rdflib.term.Identifier | str
+    ) -> bool:
+        return self.get_url_prefix(str(subject_a)) == self.get_url_prefix(str(subject_b))
+
     def is_authorized(
         self,
         actor: rdflib.URIRef | str,
@@ -103,6 +109,14 @@ class ActivityPubAuthzMixin:
             elif self.is_an_actor(actor) and self.is_an_inbox(subject):
                 # Inboxes are generally writable to all authenticated actors
                 action, reason = True, "is an inbox and actor is authenticated"
+        elif mode == AccessMode.DELETE:
+            if self.is_author(actor, subject):
+                # Objects may be deleted by their original actors
+                action, reason = True, "actor is author of object"
+            elif self.is_same_prefix(actor, subject):
+                # Origins may delete objects they are responsible for
+                # FIXME reconsider
+                action, reason = True, "actor is at origin server"
 
         action_name = "Grant" if action else "Deny"
         self._logger.debug(
