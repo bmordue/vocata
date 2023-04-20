@@ -32,7 +32,7 @@ class ActivityPubActorMixin:
             subject = rdflib.URIRef(subject)
 
         # Verify that the actor does not have a key yet
-        if self.value(subject=subject, predicate=SEC.publicKey):
+        if (subject, SEC.publicKey, None) in self:
             if force:
                 self._logger.warning("%s already has a key, but replacement forced", subject)
             else:
@@ -138,11 +138,8 @@ class ActivityPubActorMixin:
         return str(uri)
 
     def get_public_key_by_id(self, id_: rdflib.term.Identifier | str) -> str | None:
-        pem = self.value(subject=id_, predicate=SEC.publicKeyPem)
-        if pem is None:
-            return None
-
-        return str(pem)
+        pem = self.value(subject=id_, predicate=SEC.publicKeyPem, default="")
+        return str(pem) or None
 
     def get_public_key(self, actor: rdflib.term.Identifier | str) -> tuple[str | None, str | None]:
         id_ = self.value(subject=actor, predicate=SEC.publicKey)
@@ -153,18 +150,12 @@ class ActivityPubActorMixin:
         return str(id_), str(pem)
 
     def get_private_key_by_id(self, id_: rdflib.term.Identifier | str) -> str | None:
-        pem = self.value(subject=id_, predicate=SEC.privateKeyPem)
-        if pem is None:
-            return None
-
-        return str(pem)
+        pem = self.value(subject=id_, predicate=SEC.privateKeyPem, default="")
+        return str(pem) or None
 
     def get_actor_by_key_id(self, id_: rdflib.term.Identifier | str) -> str | None:
-        actor = self.value(subject=id_, predicate=SEC.owner | SEC.controller)
-        if actor is None:
-            return None
-
-        return str(actor)
+        actor = self.value(subject=id_, predicate=SEC.owner | SEC.controller, default="")
+        return str(actor) or None
 
     def get_private_key(self, actor: rdflib.term.Identifier | str) -> tuple[str | None, str | None]:
         id_ = self.value(subject=actor, predicate=SEC.privateKey)

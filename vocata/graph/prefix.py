@@ -93,11 +93,8 @@ class ActivityPubPrefixMixin:
         if endpoints_node is None:
             return None
 
-        url = self.value(subject=endpoints_node, predicate=AS[endpoint])
-        if url is None:
-            return None
-
-        return str(url)
+        url = self.value(subject=endpoints_node, predicate=AS[endpoint], default="")
+        return str(url) or None
 
     # FIXME rethink with a clear OIDC concept
     def reset_prefix_endpoints(self, prefix: str) -> rdflib.term.BNode:

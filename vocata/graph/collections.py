@@ -20,7 +20,7 @@ class ActivityPubCollectionsMixin:
         if total_items is None:
             total_items = 0
         else:
-            total_items = int(total_items)
+            total_items = total_items.value
         total_items += 1
         self._logger.debug("New total items of %s: %d", collection, total_items)
 
