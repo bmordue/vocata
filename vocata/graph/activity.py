@@ -67,6 +67,8 @@ class ActivityPubActivityMixin:
             self._logger.debug("Received activity at outbox; reassining IDs")
             new_cbd.reassign_id(activity, target, "Activity")
             new_cbd.reassign_id(object_, target)
+        # FIXME Do we need to verify the ID for inbox posts?
+        #  i.e. to not overwrite an existing activity, or to prevent spoofing?
 
         # Only activities by the requesting actor must be handled
         actor = new_cbd.value(subject=activity, predicate=AS.actor)
