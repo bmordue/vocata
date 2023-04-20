@@ -99,7 +99,7 @@ class ActivityPubActivityMixin:
     async def carry_out_activity(self, activity: str, force: bool = False):
         self._logger.info("Carrying out activity %s", activity)
 
-        type_ = self.value(subject=activity, predicate=VOC.processed)
+        type_ = self.value(subject=activity, predicate=RDF.type)
         if type_ not in ACTIVITY_TYPES:
             raise TypeError(f"{activity} is not an activity type")
 
@@ -107,7 +107,24 @@ class ActivityPubActivityMixin:
         if processed and not force:
             raise ValueError(f"Activity {activity} already processed")
 
-        raise NotImplementedError()
+        # FIXME we might want to process other activities that touch the
+        #  same object/target/… and have been received earlier here?
+
+        func_name = f"carry_out_{type_.fragment.lower()}"
+        func = getattr(self, func_name, None)
+        if func is None:
+            raise NotImplementedError()
+
+        try:
+            res = func(activity)
+        # FIXME use proper exception handling
+        except Exception as ex:
+            self.set((activity, VOC.processRessult, rdflib.Literal(str(ex))))
+            raise
+
+        self.set((activity, VOC.processResult, rdflib.Literal(res)))
+        self.set((activity, VOC.processed, rdflib.Literal(True)))
+        self.set((activity, VOC.processedAt, rdflib.Literal(datetime.now())))
 
 
 __all__ = ["ActivityPubActivityMixin"]
