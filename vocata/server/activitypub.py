@@ -23,6 +23,7 @@ class ActivityPubEndpoint(HTTPEndpoint):
 
     async def get(self, request: Request) -> JSONResponse:
         # FIXME handle Accept header
+        # FIXME use HTTP caching
         auth = self._check_auth(request, AccessMode.READ)
         if auth is not True:
             return JSONResponse({"error": auth[1]}, auth[0])
