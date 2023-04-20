@@ -60,7 +60,9 @@ class ActivityPubEndpoint(HTTPEndpoint):
             return JSONResponse({"error": str(ex)}, 400)
 
         # Side-effects of activities are carried out afterwards
-        task = BackgroundTask(request.state.graph.carry_out_activity, activity=new_uri)
+        task = BackgroundTask(
+            request.state.graph.carry_out_activity, activity=new_uri, recipient=request.state.actor
+        )
 
         # FIXME return correct content type
         return JSONResponse({}, 201, headers={"Location": str(new_uri)}, background=task)

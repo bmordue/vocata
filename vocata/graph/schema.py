@@ -44,6 +44,7 @@ ACTIVITY_TYPES = {
     AS.Update,
     AS.View,
 }
+ACTIVITY_TOUCHES = AS.actor | AS.instrument | AS.object | AS.origin | AS.target
 ACTOR_TYPES = {AS.Application, AS.Group, AS.Organization, AS.Person, AS.Service}
 OBJECT_TYPES = {
     AS.Article,

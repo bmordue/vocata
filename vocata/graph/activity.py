@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING
 
 import rdflib
 
-from .schema import ACTIVITY_TYPES, AS, OBJECT_TYPES, RDF, VOC
+from .authz import PUBLIC_ACTOR
+from .schema import ACTIVITY_TOUCHES, ACTIVITY_TYPES, AS, OBJECT_TYPES, RDF, VOC
 
 if TYPE_CHECKING:
     from .activitypub import ActivityPubGraph
@@ -79,6 +80,7 @@ class ActivityPubActivityMixin:
             raise ValueError(
                 "Activity actor %s is not the authenticated actor %s", actor, request_actor
             )
+        # FIXME also check that box owner is in audience?
 
         # Amend activity with some functional values for later processing
         new_cbd.set((activity, VOC.receivedAt, rdflib.Literal(datetime.now())))
@@ -96,8 +98,10 @@ class ActivityPubActivityMixin:
 
         return activity
 
-    async def carry_out_activity(self, activity: str, force: bool = False):
-        self._logger.info("Carrying out activity %s", activity)
+    async def carry_out_activity(
+        self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR, force: bool = False
+    ):
+        self._logger.info("Carrying out activity %s for %s", activity, recipient)
 
         type_ = self.value(subject=activity, predicate=RDF.type)
         if type_ not in ACTIVITY_TYPES:
@@ -105,10 +109,16 @@ class ActivityPubActivityMixin:
 
         processed = self.value(subject=activity, predicate=VOC.processed, default=False)
         if processed and not force:
-            raise ValueError(f"Activity {activity} already processed")
+            self._logger.warning("Activity %s already processed", activity)
 
         # FIXME we might want to process other activities that touch the
         #  same object/target/… and have been received earlier here?
+
+        # Pull all objects related to the activity
+        touches = self.objects(activity, ACTIVITY_TOUCHES, unique=True)
+        for touch in touches:
+            self._logger.debug("Activity touches %s, pulling", touch)
+            self.pull(touch, recipient)
 
         func_name = f"carry_out_{type_.fragment.lower()}"
         func = getattr(self, func_name, None)
@@ -116,15 +126,26 @@ class ActivityPubActivityMixin:
             raise NotImplementedError()
 
         try:
-            res = func(activity)
+            results = func(activity, recipient)
         # FIXME use proper exception handling
         except Exception as ex:
             self.set((activity, VOC.processRessult, rdflib.Literal(str(ex))))
             raise
 
-        self.set((activity, VOC.processResult, rdflib.Literal(res)))
+        for result in results:
+            self.add((activity, VOC.processResult, rdflib.Literal(result)))
         self.set((activity, VOC.processed, rdflib.Literal(True)))
         self.set((activity, VOC.processedAt, rdflib.Literal(datetime.now())))
+
+    def carry_out_create(
+        self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR
+    ) -> set[str]:
+        return {"no side effects to carry out"}
+
+    def carry_out_follow(
+        self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR
+    ) -> set[str]:
+        return {"no side effects to carry out"}
 
 
 __all__ = ["ActivityPubActivityMixin"]
