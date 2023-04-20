@@ -62,7 +62,9 @@ class ActivityPubEndpoint(HTTPEndpoint):
 
         # Side-effects of activities are carried out afterwards
         task = BackgroundTask(
-            request.state.graph.carry_out_activity, activity=new_uri, recipient=request.state.actor
+            request.state.graph.carry_out_activity,
+            activity=new_uri,
+            box=request.state.subject,
         )
 
         # FIXME return correct content type

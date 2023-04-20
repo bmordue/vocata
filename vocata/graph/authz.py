@@ -12,7 +12,7 @@ HAS_TRANSIENT_AUDIENCE = HAS_AUDIENCE / (AS.items * ZeroOrMore)
 HAS_TRANSIENT_INBOXES = HAS_TRANSIENT_AUDIENCE / LDP.inbox
 HAS_ACTOR = AS.actor
 HAS_AUTHOR = AS.actor | AS.attributedTo
-HAS_BOX = LDP.inbox | AS.outbox | AS.followers | AS.following
+HAS_BOX = LDP.inbox | AS.outbox
 
 PUBLIC_ACTOR = AS.Public
 

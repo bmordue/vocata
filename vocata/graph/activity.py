@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import rdflib
 
-from .authz import AccessMode, PUBLIC_ACTOR
+from .authz import AccessMode, HAS_BOX, PUBLIC_ACTOR
 from .schema import ACTIVITY_TOUCHES, ACTIVITY_TYPES, AS, OBJECT_TYPES, RDF, VOC
 
 if TYPE_CHECKING:
@@ -99,8 +99,11 @@ class ActivityPubActivityMixin:
         return activity
 
     async def carry_out_activity(
-        self, activity: rdflib.URIRef, recipient: rdflib.URIRef = PUBLIC_ACTOR, force: bool = False
+        self, activity: rdflib.URIRef, box: rdflib.URIRef = PUBLIC_ACTOR, force: bool = False
     ):
+        self._logger.debug("Determining recipient of %s from box %s", activity, box)
+        # FIXME is this correct?
+        recipient = self.value(predicate=HAS_BOX, object=box, any=True)
         self._logger.info("Carrying out activity %s for %s", activity, recipient)
 
         type_ = self.value(subject=activity, predicate=RDF.type)
