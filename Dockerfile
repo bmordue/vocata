@@ -12,7 +12,7 @@ RUN poetry build
 
 
 FROM base AS runtime
-ARG VOCATA_VERSION=0.1.0
+ARG VOCATA_VERSION=0.2.0
 
 RUN apt-get -y update && \
 	apt-get -y install python3-pip python3-psycopg2 git
