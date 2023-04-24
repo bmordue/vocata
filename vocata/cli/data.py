@@ -51,6 +51,7 @@ def subjects(
     table.add_column("Type", justify="left")
 
     for s, t in graph.uri_subjects(prefix):
+        # FIXME better way to determine short type name
         table.add_row(s, t.fragment if t else "")
 
     console = Console()
