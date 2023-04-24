@@ -130,7 +130,7 @@ class ActivityPubAuthzMixin:
         return action
 
     def filter_authorized(
-        self, actor: rdflib.URIRef | str, root_graph: rdflib.Graph | None = None
+        self, actor: rdflib.URIRef | str | None, root_graph: rdflib.Graph | None = None
     ) -> rdflib.Graph:
         if root_graph is None:
             root_graph = self
@@ -140,7 +140,11 @@ class ActivityPubAuthzMixin:
         new_g = self.__class__()
 
         for subject in self.subjects():
-            if isinstance(subject, rdflib.term.BNode) or root_graph.is_authorized(actor, subject):
+            if (
+                actor is None
+                or isinstance(subject, rdflib.term.BNode)
+                or root_graph.is_authorized(actor, subject)
+            ):
                 for s, p, o in self.triples((subject, None, None)):
                     if s in VOC or p in VOC or o in VOC:
                         # Never expose any triples involving local information scheme

@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 import typer
 
@@ -20,3 +21,17 @@ def load_json(
 
     graph = get_graph(ctx.obj["settings"])
     graph.add_jsonld(data, allow_non_local)
+
+
+@app.command()
+def dump_json(
+    ctx: typer.Context,
+    subject: str = typer.Argument(..., help="URI of subject to dump"),
+    actor: Optional[str] = typer.Option(None, help="Dump with privileges of selected actor"),
+):
+    """Output a single subject as JSON-LD"""
+    graph = get_graph(ctx.obj["settings"])
+
+    doc = graph.activitystreams_cbd(subject, actor).to_activitystreams(subject)
+
+    print(json.dumps(doc, sort_keys=True, indent=2))

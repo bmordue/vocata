@@ -94,7 +94,7 @@ class JSONLDMixin:
                 doc = None
         return doc
 
-    def activitystreams_cbd(self, uri: str, actor: str) -> Self:
+    def activitystreams_cbd(self, uri: str, actor: str | None) -> Self:
         # FIXME this is not precisely a CBD (also fix in README)
         self._logger.debug("Deriving CBD for %s as %s", uri, actor)
         cbd = self.__class__()
