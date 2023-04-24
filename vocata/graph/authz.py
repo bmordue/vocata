@@ -24,6 +24,8 @@ class AccessMode(StrEnum):
     WRITE = "write"
     DELETE = "delete"
     ACCEPT_FOLLOW = "accept_follow"
+    ADD = "add"
+    REMOVE = "remove"
 
 
 class ActivityPubAuthzMixin:
@@ -122,6 +124,16 @@ class ActivityPubAuthzMixin:
             if actor == subject:
                 # Actors can accept follows for themselves
                 action, reason = True, "actor is followed subject"
+        elif mode == AccessMode.ADD:
+            if self.is_author(actor, subject):
+                # Collection authors may add objects
+                # FIXME reconsider
+                action, reason = True, "actor is author of collection"
+        elif mode == AccessMode.REMOVE:
+            if self.is_author(actor, subject):
+                # Collection authors may remove objects
+                # FIXME reconsider
+                action, reason = True, "actor is author of collection"
 
         action_name = "Grant" if action else "Deny"
         self._logger.debug(

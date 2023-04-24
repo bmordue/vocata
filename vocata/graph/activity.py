@@ -188,6 +188,42 @@ class ActivityPubActivityMixin:
         self.add_to_collection(collection, actor)
         return {f"actor added to following collection of {recipient}"}
 
+    def carry_out_add(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        object_: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        target = self.value(subject=activity, predicate=AS.target)
+        if target is None:
+            raise KeyError("No target to add to")
+
+        if not self.is_authorized(actor, target, AccessMode.ADD):
+            # FIXME use proper exception
+            raise Exception(f"Actoor {actor} is not authorized to add to {target}")
+
+        self.add_to_collection(target, object_)
+        return {f"Added {object_} to {target}"}
+
+    def carry_out_remove(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        object_: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        target = self.value(subject=activity, predicate=AS.target)
+        if target is None:
+            raise KeyError("No target to remove from")
+
+        if not self.is_authorized(actor, target, AccessMode.REMOVE):
+            # FIXME use proper exception
+            raise Exception(f"Actoor {actor} is not authorized to remove from {target}")
+
+        self.remove_from_collection(target, object_)
+        return {f"Removed {object_} from {target}"}
+
     def carry_out_create(
         self,
         activity: rdflib.URIRef,
