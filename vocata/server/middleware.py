@@ -32,7 +32,10 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
         request.state.graph = request.app.state.graph
 
         # FIXME fix timeout for real
-        request.state.json = await request.json()
+        try:
+            request.state.json = await request.json()
+        except:
+            pass
 
         try:
             request.state.actor = await self.determine_actor(request)
