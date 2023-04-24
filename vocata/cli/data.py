@@ -2,6 +2,8 @@ import json
 from typing import Optional
 
 import typer
+from rich.console import Console
+from rich.table import Table
 
 from ..graph import get_graph
 
@@ -35,3 +37,21 @@ def dump_json(
     doc = graph.activitystreams_cbd(subject, actor).to_activitystreams(subject)
 
     print(json.dumps(doc, sort_keys=True, indent=2))
+
+
+@app.command()
+def subjects(
+    ctx: typer.Context,
+    prefix: Optional[str] = typer.Option(None, help="Limit subjects to selected URI prefix"),
+):
+    graph = get_graph(ctx.obj["settings"])
+
+    table = Table(title="Subject list")
+    table.add_column("Subject", justify="left", no_wrap=True)
+    table.add_column("Type", justify="left")
+
+    for s, t in graph.uri_subjects(prefix):
+        table.add_row(s, t.fragment if t else "")
+
+    console = Console()
+    console.print(table)

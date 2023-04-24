@@ -62,5 +62,20 @@ class ActivityPubGraph(
             if (None, None, subject) not in self:
                 yield subject
 
+    def uri_subjects(
+        self, prefix: str | None
+    ) -> Iterator[tuple[rdflib.URIRef, rdflib.URIRef | None]]:
+        if prefix is None:
+            prefix = "https://"
+
+        for s in self.subjects(unique=True):
+            if not isinstance(s, rdflib.URIRef):
+                continue
+            if prefix and not s.startswith(prefix):
+                continue
+
+            type_ = self.value(subject=s, predicate=RDF.type)
+            yield s, type_
+
 
 __all__ = ["ActivityPubGraph"]
