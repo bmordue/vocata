@@ -54,6 +54,8 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
 
             if scheme.lower() == "basic":
                 actor = await self.determine_actor_from_basic_auth(request)
+            elif scheme.lower() == "signature":
+                actor = await self.determine_actor_from_http_signature(request)
 
         # Ensure the actor is on the graph for later authorization
         request.state.graph.pull(actor)

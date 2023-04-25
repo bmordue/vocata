@@ -91,7 +91,16 @@ class HTTPSignatureAuth(AuthBase):
 
     @classmethod
     def from_signed_request(cls, request: Request, pull: bool = True) -> str:
-        signature_fields = cls.get_signature_fields(request.headers["Signature"])
+        signature_text = None
+        if "Signature" in request.headers:
+            signature_text = request.headers["Signature"]
+        elif "Authorization" in request.headers:
+            scheme, parameters = request.headers["Authorization"].split(" ", 1)
+            if scheme.lower() == "signature":
+                signature_text = parameters
+        if signature_text is None:
+            raise KeyError("No signature found in headers")
+        signature_fields = cls.get_signature_fields(signature_text)
 
         if "keyId" not in signature_fields:
             raise KeyError("keyId missing in signature")
