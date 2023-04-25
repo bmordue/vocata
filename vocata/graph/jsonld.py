@@ -7,7 +7,7 @@ from rdflib.parser import PythonInputSource
 
 from .schema import AS_URI
 
-_ALWAYS_LIST = {"tag", "items", "to", "bto", "cc", "bcc", "audience"}
+_ALWAYS_LIST = {"tag", "items", "orderedItems", "to", "bto", "cc", "bcc", "audience"}
 
 
 def jsonld_single(doc: dict, id_: str, key_: str = "id") -> dict:
@@ -46,6 +46,11 @@ def jsonld_cleanup_ids(doc: dict, key_: str = "id", flatten: bool = True) -> dic
                         new_list.append(new_elem)
                 else:
                     new_list.append(elem)
+            if new_list:
+                if len(new_list) > 1 or attr in _ALWAYS_LIST:
+                    new_doc[attr] = new_list
+                else:
+                    new_doc[attr] = new_list[0]
         elif isinstance(value, dict):
             new_value = jsonld_cleanup_ids(value, key_)
             if new_value:
