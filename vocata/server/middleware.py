@@ -20,6 +20,7 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
         actor = request.state.graph.get_actor_by_key_id(key_id)
         if not actor:
             raise KeyError("Public key is not linked to an actor")
+        return actor
 
     async def determine_actor_from_basic_auth(self, request: Request) -> str:
         request.state.graph._logger.debug("Doing HTTP Basic auth")
