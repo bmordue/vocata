@@ -206,6 +206,46 @@ class ActivityPubActivityMixin:
         self.add_to_collection(target, object_)
         return {f"Added {object_} to {target}"}
 
+    def carry_out_announce(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        object_: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        collection = self.value(subject=object_, predicate=AS.shares)
+        if collection is None:
+            # FIXME create collection
+            self._logger.warning("Object %s does not have a shares collection", object_)
+            return {f"{object_} does not have shares collection; no side effects to carry out"}
+
+        if not self.is_authorized(actor, collection, AccessMode.ADD):
+            # FIXME use proper exception
+            raise Exception(f"Actor {actor} is not authorized to announce {object_}")
+
+        self.add_to_collection(collection, activity)
+        return {f"activity added to shares collection of {object_}"}
+
+    def carry_out_like(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        object_: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        collection = self.value(subject=object_, predicate=AS.likes)
+        if collection is None:
+            # FIXME create collection
+            self._logger.warning("Object %s does not have a likes collection", object_)
+            return {f"{object_} does not have likes collection; no side effects to carry out"}
+
+        if not self.is_authorized(actor, collection, AccessMode.ADD):
+            # FIXME use proper exception
+            raise Exception(f"Actor {actor} is not authorized to like {object_}")
+
+        self.add_to_collection(collection, activity)
+        return {f"activity added to likes collection of {object_}"}
+
     def carry_out_create(
         self,
         activity: rdflib.URIRef,
