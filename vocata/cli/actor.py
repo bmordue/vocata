@@ -53,3 +53,22 @@ def create(
 
     if not uri:
         raise typer.Exit(code=2)
+
+
+@app.command()
+def set_password(
+    ctx: typer.Context,
+    password: str = typer.Option(
+        ..., help="Login password for C2S", prompt=True, confirmation_prompt=True, hide_input=True
+    ),
+):
+    """Set C2S loing password for an actor"""
+    graph = get_graph(ctx.obj["settings"])
+    account = ctx.obj["current_account"]
+
+    actor_uri = graph.get_actor_uri_by_acct(account)
+    if actor_uri is None:
+        ctx.obj["log"].error("The account %s does not exist", account)
+        raise typer.Exit(code=1)
+
+    graph.set_actor_password(actor_uri, password)
