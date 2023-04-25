@@ -32,11 +32,7 @@ class NodeInfoEndpoint(HTTPEndpoint):
                 "localPosts": 0,  # FIXME implement
                 "localComments": 0,  # FIXME implement
             },
-            "metadata": {
-                "instance": {
-                    "uuid": request.state.graph.instance_uuid,
-                }
-            },
+            "metadata": {},
         }
 
         return JSONResponse(nodeinfo, media_type=f'application/json; profile="{self.schema}#"')

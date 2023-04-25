@@ -2,7 +2,6 @@
 
 import logging
 from typing import Iterator
-from uuid import uuid4
 
 import rdflib
 
@@ -13,7 +12,7 @@ from .collections import ActivityPubCollectionsMixin
 from .federation import ActivityPubFederationMixin
 from .jsonld import JSONLDMixin
 from .prefix import ActivityPubPrefixMixin
-from .schema import RDF, VOC
+from .schema import RDF
 
 
 class ActivityPubGraph(
@@ -33,28 +32,6 @@ class ActivityPubGraph(
     def open(self, database: str, *args, **kwargs):
         self._logger.debug("Opening graph store from %s", database)
         super().open(database, *args, **kwargs)
-        self.setup_instance()
-
-    def setup_instance(self):
-        if not self.instance_ref:
-            self._logger.debug("Generating new instance ref")
-            uuid = str(uuid4())
-            ref = rdflib.URIRef(f"urn:uuid:{uuid}")
-
-            self.add((VOC.Instance, VOC.instance, ref))
-            self.add((ref, RDF.type, VOC.Instance))
-        self._logger.debug("Instance ref is %s", self.instance_uuid)
-
-    @property
-    def instance_ref(self) -> rdflib.URIRef | None:
-        return self.value(VOC.Instance, VOC.instance)
-
-    @property
-    def instance_uuid(self) -> str | None:
-        ref = self.instance_ref
-        if ref is None:
-            return None
-        return str(self.instance_ref).split(":")[2]
 
     def roots(self) -> Iterator[rdflib.term.Node]:
         # FIXME try upstreaming to rdflib
