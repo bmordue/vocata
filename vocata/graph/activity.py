@@ -65,6 +65,7 @@ class ActivityPubActivityMixin:
 
         if self.is_an_outbox(target):
             # Outbox activities and objects must get reassigned IDs
+            # FIXME must take care to have the object in the CBD in the first place
             self._logger.debug("Received activity at outbox; reassining IDs")
             new_cbd.reassign_id(activity, target, "Activity")
             new_cbd.reassign_id(object_, target)
