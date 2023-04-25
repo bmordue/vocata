@@ -348,6 +348,90 @@ class ActivityPubActivityMixin:
         self.remove_from_collection(target, object_)
         return {f"Removed {object_} from {target}"}
 
+    def carry_out_undo(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        object_: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        if not self.is_authorized(actor, object_, AccessMode.UNDO):
+            # FIXME use proper exception
+            raise Exception(f"Actor {actor} is not authorized to undo {object_}")
+
+        object_type = self.value(subject=object_, predicate=RDF.type)
+        if object_type is None:
+            raise TypeError(f"{object_} has no type")
+        if object_type not in ACTIVITY_TYPES:
+            raise TypeError(f"{object_} is not an activity type")
+
+        # We might have a handler for undoing this type of object
+        func_name = f"carry_out_undo_{object_type.fragment.lower()}"
+        func = getattr(self, func_name, None)
+        if func is None:
+            return {"no side effects to carry out"}
+        return func(activity, actor, object_, recipient)
+
+    def carry_out_undo_accept(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        original_activity: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        original_object = self.value(subject=original_activity, predicate=AS.object)
+
+        # Reject is inverse of Accept
+        return self.carry_out_reject(activity, actor, original_object)
+
+    def carry_out_undo_add(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        original_activity: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        original_object = self.value(subject=original_activity, predicate=AS.object)
+
+        # Remove is inverse of Add
+        return self.carry_out_remove(activity, actor, original_object)
+
+    def carry_out_undo_create(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        original_activity: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        original_object = self.value(subject=original_activity, predicate=AS.object)
+
+        # Delete is inverse of Create
+        return self.carry_out_delete(activity, actor, original_object)
+
+    def carry_out_undo_like(
+        self,
+        activity: rdflib.URIRef,
+        actor: rdflib.URIRef,
+        original_activity: rdflib.URIRef,
+        recipient: rdflib.URIRef = PUBLIC_ACTOR,
+    ) -> set[str]:
+        original_object = self.value(subject=original_activity, predicate=AS.object)
+
+        collection = self.value(subject=original_object, predicate=AS.likes)
+        if collection is None:
+            # FIXME create collection
+            self._logger.warning("Object %s does not have a likes collection", original_object)
+            return {
+                f"{original_object} does not have likes collection; no side effects to carry out"
+            }
+
+        if not self.is_authorized(actor, collection, AccessMode.REMOVE):
+            # FIXME use proper exception
+            raise Exception(f"Actor {actor} is not authorized to undo like of {original_object}")
+
+        self.remove_from_collection(collection, original_activity)
+        return {f"activity removed from likes collection of {original_object}"}
+
     def carry_out_update(
         self,
         activity: rdflib.URIRef,

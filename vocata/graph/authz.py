@@ -26,6 +26,7 @@ class AccessMode(StrEnum):
     ACCEPT_FOLLOW = "accept_follow"
     ADD = "add"
     REMOVE = "remove"
+    UNDO = "undo"
 
 
 class ActivityPubAuthzMixin:
@@ -134,6 +135,10 @@ class ActivityPubAuthzMixin:
                 # Collection authors may remove objects
                 # FIXME reconsider
                 action, reason = True, "actor is author of collection"
+        elif mode == AccessMode.UNDO:
+            if self.is_author(actor, subject):
+                # Original activity actors can undo their activities
+                action, reason = True, "actor is original activity actor"
 
         action_name = "Grant" if action else "Deny"
         self._logger.debug(
