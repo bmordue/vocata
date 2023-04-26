@@ -6,6 +6,7 @@ from typing import Optional
 from rich.logging import RichHandler
 import typer
 
+from ..graph import ActivityPubGraph
 from ..settings import get_settings
 from . import actor
 from . import data
@@ -47,3 +48,7 @@ def configure_app(
         handlers=[RichHandler(rich_tracebacks=True)],
     )
     ctx.obj["log"] = logging.getLogger("vocata-cli")
+
+    ctx.obj["graph"] = ActivityPubGraph(
+        logger=ctx.obj["log"], database=ctx.objec["settings"].graph.database.uri
+    )

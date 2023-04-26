@@ -1,7 +1,5 @@
 import typer
 
-from ..graph import get_graph
-
 app = typer.Typer(help="Manage local prefixes (domains)")
 
 
@@ -30,9 +28,8 @@ def set_local(
     if not yes:
         raise typer.Exit(code=1)
 
-    graph = get_graph(ctx.obj["settings"])
-
-    graph.set_local_prefix(ctx.obj["current_prefix"], is_local, reset_endpoints)
+    with ctx.obj["graph"] as graph:
+        graph.set_local_prefix(ctx.obj["current_prefix"], is_local, reset_endpoints)
 
 
 # FIXME rethink with a clear OIDC concept
@@ -51,9 +48,8 @@ def set_oauth_issuer(
     if not yes:
         raise typer.Exit(code=1)
 
-    graph = get_graph(ctx.obj["settings"])
+    with ctx.obj["graph"] as graph:
+        if not graph.is_local_prefix(ctx.obj["current_prefix"]):
+            raise typer.BadParameter(f"{ctx.obj['current_prefix']} is not a local prefix")
 
-    if not graph.is_local_prefix(ctx.obj["current_prefix"]):
-        raise typer.BadParameter(f"{ctx.obj['current_prefix']} is not a local prefix")
-
-    graph.set_prefix_oauth_issuer(ctx.obj["current_prefix"], issuer)
+        graph.set_prefix_oauth_issuer(ctx.obj["current_prefix"], issuer)

@@ -1,9 +1,11 @@
+from contextlib import asynccontextmanager
+
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.routing import Mount, Route
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
-from ..graph import get_graph
+from ..graph import ActivityPubGraph
 from ..settings import get_settings
 from .activitypub import ActivityPubEndpoint
 from .middleware import ActivityPubActorMiddleware
@@ -37,7 +39,18 @@ routes = [
     Route("/{path:path}", ActivityPubEndpoint, methods=["GET", "POST"]),
 ]
 
-app = Starlette(middleware=middlewares, routes=routes)
-app.state.graph = get_graph(settings)
+
+@asynccontextmanager
+async def _lifespan(app: Starlette) -> dict:
+    settings = get_settings()
+
+    # FIXME pass logger here
+    with ActivityPubGraph(database=settings.graph.database.uri) as graph:
+        yield {
+            "graph": graph,
+        }
+
+
+app = Starlette(middleware=middlewares, routes=routes, lifespan=_lifespan)
 
 __all__ = ["app"]

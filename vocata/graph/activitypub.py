@@ -25,13 +25,28 @@ class ActivityPubGraph(
     JSONLDMixin,
     ActivityPubFederationMixin,
 ):
-    def __init__(self, *args, **kwargs):
-        self._logger = logging.getLogger(__name__)
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        store: str = "SQLAlchemy",
+        *args,
+        logger: logging.Logger | None = None,
+        database: str | None = None,
+        **kwargs
+    ):
+        self._logger = logger or logging.getLogger(__name__)
+        self._database = database
+        super().__init__(store, *args, **kwargs)
 
-    def open(self, database: str, *args, **kwargs):
-        self._logger.debug("Opening graph store from %s", database)
-        super().open(database, *args, **kwargs)
+    def __enter__(self):
+        self.open()
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    def open(self, *args, **kwargs):
+        self._logger.debug("Opening graph store from %s", self._database)
+        super().open(self._database, *args, **kwargs)
 
     def roots(self) -> Iterator[rdflib.term.Node]:
         # FIXME try upstreaming to rdflib

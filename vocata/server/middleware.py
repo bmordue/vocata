@@ -63,8 +63,6 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
         return actor
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        request.state.graph = request.app.state.graph
-
         # FIXME fix timeout for real
         try:
             request.state.json = await request.json()

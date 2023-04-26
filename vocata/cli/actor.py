@@ -3,8 +3,6 @@ from typing import Optional
 
 import typer
 
-from ..graph import get_graph
-
 
 class ActorType(StrEnum):
     application = "Application"
@@ -37,19 +35,19 @@ def create(
 ):
     """Create a new local actor"""
     # FIXME support auto-assigned ID
-    graph = get_graph(ctx.obj["settings"])
     account = ctx.obj["current_account"]
 
-    # FIXME allow specifying account handle or URI
-    if not graph.is_valid_acct(account):
-        ctx.obj["log"].error("The account name %s is invalid", account)
-        raise typer.Exit(code=1)
+    with ctx.obj["graph"] as graph:
+        # FIXME allow specifying account handle or URI
+        if not graph.is_valid_acct(account):
+            ctx.obj["log"].error("The account name %s is invalid", account)
+            raise typer.Exit(code=1)
 
-    if graph.get_actor_uri_by_acct(account):
-        ctx.obj["log"].error("The account %s already exists", account)
-        raise typer.Exit(code=1)
+        if graph.get_actor_uri_by_acct(account):
+            ctx.obj["log"].error("The account %s already exists", account)
+            raise typer.Exit(code=1)
 
-    uri = graph.create_actor_from_acct(account, name or account, actor_type.value, force)
+        uri = graph.create_actor_from_acct(account, name or account, actor_type.value, force)
 
     if not uri:
         raise typer.Exit(code=2)
@@ -63,12 +61,12 @@ def set_password(
     ),
 ):
     """Set C2S loing password for an actor"""
-    graph = get_graph(ctx.obj["settings"])
     account = ctx.obj["current_account"]
 
-    actor_uri = graph.get_actor_uri_by_acct(account)
-    if actor_uri is None:
-        ctx.obj["log"].error("The account %s does not exist", account)
-        raise typer.Exit(code=1)
+    with ctx.obj["graph"] as graph:
+        actor_uri = graph.get_actor_uri_by_acct(account)
+        if actor_uri is None:
+            ctx.obj["log"].error("The account %s does not exist", account)
+            raise typer.Exit(code=1)
 
-    graph.set_actor_password(actor_uri, password)
+        graph.set_actor_password(actor_uri, password)
