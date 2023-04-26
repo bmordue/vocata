@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from tempfile import TemporaryDirectory
 
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
@@ -8,6 +9,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from ..graph import ActivityPubGraph
 from ..settings import get_settings
 from .activitypub import ActivityPubEndpoint
+from .metrics import MetricsEndpoint, RequestMetricsMiddleware, get_metrics_registry
 from .middleware import ActivityPubActorMiddleware
 from .nodeinfo import NodeInfoEndpoint, nodeinfo_wellknown
 from .oauth import OAuthMetadataEndpoint
@@ -17,6 +19,7 @@ settings = get_settings()
 
 middlewares = [
     Middleware(ProxyHeadersMiddleware, trusted_hosts=settings.server.trusted_proxies),
+    Middleware(RequestMetricsMiddleware),
     Middleware(ActivityPubActorMiddleware),
 ]
 routes = [
@@ -32,6 +35,7 @@ routes = [
     Mount(
         "/_functional",
         routes=[
+            Route("/metrics", MetricsEndpoint, name="metrics"),
             Route("/nodeinfo", NodeInfoEndpoint, name="nodeinfo"),
         ],
         name="functional",
@@ -45,9 +49,12 @@ async def _lifespan(app: Starlette) -> dict:
     settings = get_settings()
 
     # FIXME pass logger here
-    with ActivityPubGraph(database=settings.graph.database.uri) as graph:
+    with ActivityPubGraph(
+        database=settings.graph.database.uri
+    ) as graph, TemporaryDirectory() as metrics_tmp_dir:
         yield {
             "graph": graph,
+            "metrics_registry": get_metrics_registry(metrics_tmp_dir),
         }
 
 

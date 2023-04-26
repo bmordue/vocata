@@ -1138,6 +1138,21 @@ dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
+name = "prometheus-client"
+version = "0.16.0"
+description = "Python client for the Prometheus monitoring system."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "prometheus_client-0.16.0-py3-none-any.whl", hash = "sha256:0836af6eb2c8f4fed712b2f279f6c0a8bbab29f9f4aa15276b91c7cb0d1616ab"},
+    {file = "prometheus_client-0.16.0.tar.gz", hash = "sha256:a03e35b359f14dd1630898543e2120addfdeacd1a6069c1367ae90fd93ad3f48"},
+]
+
+[package.extras]
+twisted = ["twisted"]
+
+[[package]]
 name = "pycparser"
 version = "2.21"
 description = "C parser in Python"
@@ -1861,4 +1876,4 @@ server = ["starlette", "uvicorn", "oic", "passlib"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "27cbd63f25d7610cf21e89c03a77c78056c94b172548bd200891b3132ac04940"
+content-hash = "4bcf647c81cec14dbf4d71b741497c6ad0aac76c60ea97592ce59ac79cfe060f"
