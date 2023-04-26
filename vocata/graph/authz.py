@@ -12,7 +12,7 @@ HAS_TRANSIENT_AUDIENCE = HAS_AUDIENCE / (AS.items * ZeroOrMore)
 HAS_TRANSIENT_INBOXES = HAS_TRANSIENT_AUDIENCE / LDP.inbox
 HAS_ACTOR = AS.actor
 HAS_AUTHOR = AS.actor | AS.attributedTo
-HAS_BOX = LDP.inbox | AS.outbox
+HAS_BOX = LDP.inbox | AS.outbox | AS.following | AS.followers
 
 PUBLIC_ACTOR = AS.Public
 
@@ -92,6 +92,7 @@ class ActivityPubAuthzMixin:
                 action, reason = True, "is an actor"
             elif self.is_a_box(subject):
                 # Inboxes, outboxes, and follower, following are readable
+                # FIXME reconsider
                 action, reason = True, "is a box collection"
             elif self.is_an_actor_public_key(subject):
                 # Public keys of actors can be read
