@@ -63,6 +63,10 @@ class ActivityPubFederationMixin:
             self._logger.debug("%s is a local prefix, skipping pull", subject)
             return True, None
 
+        if subject == PUBLIC_ACTOR:
+            self._logger.debug("Not pulling public actor")
+            return True, None
+
         # FIXME add some kind of debouncing mechanism
         #  and/or properly use HTTP caching
 
