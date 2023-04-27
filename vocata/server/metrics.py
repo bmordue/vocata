@@ -1,12 +1,11 @@
 import os
-from time import time
 from typing import Callable
 
 import prometheus_client
 from prometheus_client import (
     CollectorRegistry,
     CONTENT_TYPE_LATEST,
-    Counter,
+    Gauge,
     Histogram,
     multiprocess,
 )
@@ -18,16 +17,15 @@ from starlette.responses import PlainTextResponse, Response
 
 class RequestMetricsMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        request.state._time_start = time()
-        response = await call_next(request)
-        request.state._time_end = time()
+        pending_gauge = request.state.metrics_registry._names_to_collectors[
+            "http_requests_pending"
+        ].labels(request.url.netloc, request.method)
+        latency_hist = request.state.metrics_registry._names_to_collectors[
+            "http_requests_latency_seconds"
+        ].labels(request.url.netloc, request.method)
 
-        request.state.metrics_registry._names_to_collectors["request_latency_seconds"].labels(
-            request.url.netloc, request.method, response.status_code
-        ).observe(request.state._time_end - request.state._time_start)
-        request.state.metrics_registry._names_to_collectors["request_count"].labels(
-            request.url.netloc, request.method, response.status_code
-        ).inc()
+        with pending_gauge.track_inprogress(), latency_hist.time():
+            response = await call_next(request)
 
         return response
 
@@ -43,11 +41,16 @@ def get_metrics_registry(tmp_dir: str):
     registry = CollectorRegistry()
     multiprocess.MultiProcessCollector(registry)
 
-    Counter("request_count", "Request count", ("domain", "method", "status"), registry=registry)
     Histogram(
-        "request_latency_seconds",
+        "http_requests_latency_seconds",
         "Request latency",
-        ("domain", "method", "status"),
+        ("domain", "method"),
+        registry=registry,
+    )
+    Gauge(
+        "http_requests_pending",
+        "Currently pending requests",
+        ("domain", "method"),
         registry=registry,
     )
 
