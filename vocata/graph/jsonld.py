@@ -1,11 +1,15 @@
 import json
-from typing import Self
+from typing import Self, TYPE_CHECKING
 
+import pyld
 import rdflib
 from pyld import jsonld
 from rdflib.parser import PythonInputSource
 
 from .schema import AS_URI
+
+if TYPE_CHECKING:
+    from .activitypub import ActivityPubGraph
 
 _ALWAYS_LIST = {"tag", "items", "orderedItems", "to", "bto", "cc", "bcc", "audience"}
 
@@ -73,6 +77,23 @@ def jsonld_cleanup_ids(doc: dict, key_: str = "id", flatten: bool = True) -> dic
     return new_doc
 
 
+class ActivityPubJSONLDLoader:
+    def __init__(self, graph: "ActivityPubGraph", *args, **kwargs):
+        self._graph = graph
+        self._loader = pyld.documentloader.requests.requests_document_loader(*args, **kwargs)
+
+    def __call__(self, url: str, options: dict | None = None) -> dict:
+        if options is None:
+            options = {}
+        options.setdefault("headers", {})
+        options["headers"]["Accept"] = "application/ld+json, application/json"
+        options["headers"]["User-Agent"] = self._graph._user_agent
+
+        # FIXME use cached profiles here
+
+        return self._loader(url, options)
+
+
 class JSONLDMixin:
     def to_jsonld(self, profile: str, context: str | dict | None = None) -> dict:
         if context is None:
@@ -80,6 +101,7 @@ class JSONLDMixin:
 
         doc = json.loads(self.serialize(format="json-ld"))
 
+        jsonld.set_document_loader(ActivityPubJSONLDLoader(self))
         framed = jsonld.frame(doc, profile, options={"embed": "@always"})
         compacted = jsonld.compact(framed, context)
 
@@ -102,14 +124,14 @@ class JSONLDMixin:
     def activitystreams_cbd(self, uri: str, actor: str | None) -> Self:
         # FIXME this is not precisely a CBD (also fix in README)
         self._logger.debug("Deriving CBD for %s as %s", uri, actor)
-        cbd = self.__class__()
+        cbd = self.__class__(None)
         subjects = {rdflib.URIRef(uri)}
         seen = set()
         while subjects:
             current_subject = subjects.pop()
             self._logger.debug("Adding %s to CBD", current_subject)
             seen.add(current_subject)
-            new_cbd = self.cbd(current_subject, target_graph=self.__class__())
+            new_cbd = self.cbd(current_subject, target_graph=self.__class__(None))
             for s, p, o in new_cbd.triples((None, None, None)):
                 if (
                     isinstance(o, rdflib.URIRef)
