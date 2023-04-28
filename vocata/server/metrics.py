@@ -1,5 +1,5 @@
 import os
-from typing import Callable
+from typing import Callable, ClassVar
 
 import prometheus_client
 from prometheus_client import (
@@ -16,7 +16,12 @@ from starlette.responses import PlainTextResponse, Response
 
 
 class RequestMetricsMiddleware(BaseHTTPMiddleware):
+    ignored_paths: ClassVar[set[str]] = {"/_functional/metrics"}
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        if request.url.path in self.ignored_paths:
+            return await call_next(request)
+
         pending_gauge = request.state.metrics_registry._names_to_collectors[
             "http_requests_pending"
         ].labels(request.url.netloc, request.method)
