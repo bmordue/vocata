@@ -1,12 +1,17 @@
+from typing import ClassVar
+
 from starlette.background import BackgroundTask
 from starlette.endpoints import HTTPEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from ..graph.authz import AccessMode, PUBLIC_ACTOR
+from ..graph.federation import CONTENT_TYPE
 
 
 class ActivityPubEndpoint(HTTPEndpoint):
+    ACCEPT_TYPES: ClassVar[set[str]] = {CONTENT_TYPE, "application/activity+json"}
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -37,10 +42,18 @@ class ActivityPubEndpoint(HTTPEndpoint):
             return JSONResponse({"error": "Not found"}, 404)
 
         # FIXME return correct content type
-        return JSONResponse(doc)
+        return JSONResponse(doc, media_type=CONTENT_TYPE)
 
     async def post(self, request: Request) -> JSONResponse:
         # FIXME handle Accept header
+
+        # POST data must be ActivityPub
+        if (
+            "Content-Type" not in request.headers
+            or request.headers["Content-Type"] not in self.ACCEPT_TYPES
+        ):
+            return JSONResponse({"error": "Wrong Content-Type"}, 415)
+
         # POST target must be an inbox or outbox collection
         if not request.state.graph.is_a_box(request.state.subject):
             return JSONResponse({"error": "Not an inbox or outbox"}, 405)
