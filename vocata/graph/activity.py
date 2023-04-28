@@ -17,7 +17,7 @@ class ActivityPubActivityMixin:
         request_actor = rdflib.URIRef(request_actor)
 
         # Add activity to a new subgraph for verification and transformation
-        new_g = self.__class__()
+        new_g = self.__class__(None)
         new_g.add_jsonld(doc, allow_non_local=True)
         return self.handle_activity_subgraph(new_g, target, request_actor)
 

@@ -155,7 +155,7 @@ class ActivityPubAuthzMixin:
 
         self._logger.debug("Filtering (sub)graph using authorization rules")
 
-        new_g = self.__class__()
+        new_g = self.__class__(None)
 
         for subject in self.subjects():
             if (

@@ -27,7 +27,7 @@ class ActivityPubGraph(
 ):
     def __init__(
         self,
-        store: str = "SQLAlchemy",
+        store: str | None = None,
         *args,
         logger: logging.Logger | None = None,
         database: str | None = None,
@@ -35,14 +35,24 @@ class ActivityPubGraph(
     ):
         self._logger = logger or logging.getLogger(__name__)
         self._database = database
-        super().__init__(store, *args, **kwargs)
+        if store is None:
+            if self._database:
+                self._store = "SQLAlchemy"
+            else:
+                self._store = "default"
+        else:
+            self._store = store
+
+        super().__init__(self._store, *args, identifier=str(VOC.Instance), **kwargs)
 
     def __enter__(self):
-        self.open()
+        if self._database is not None:
+            self.open(create=True)
         return self
 
     def __exit__(self, *args):
-        self.close()
+        if self._database is not None:
+            self.close()
 
     def open(self, *args, **kwargs):
         self._logger.debug("Opening graph store from %s", self._database)
