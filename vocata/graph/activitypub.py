@@ -12,7 +12,7 @@ from .collections import ActivityPubCollectionsMixin
 from .federation import ActivityPubFederationMixin
 from .jsonld import JSONLDMixin
 from .prefix import ActivityPubPrefixMixin
-from .schema import RDF
+from .schema import AS, RDF, VOC
 
 
 class ActivityPubGraph(
@@ -47,6 +47,19 @@ class ActivityPubGraph(
     def open(self, *args, **kwargs):
         self._logger.debug("Opening graph store from %s", self._database)
         super().open(self._database, *args, **kwargs)
+
+        self.schema_migrate()
+
+    def schema_migrate(self):
+        self._logger.info("Migrating graph schema")
+        # FIXME find better code structure;
+        #  probably in conjunction with describing transformations in-graph
+
+        # 2023-04-28 Use AS.alsoKnownAs on actor to link webfinger acct
+        for s, p, o in self.triples((None, VOC.webfingerHref, None)):
+            self._logger.debug("Replacing webfingerHref for %s with alsoKnownAs on %s", s, o)
+            self.add((o, AS.alsoKnownAs, s))
+            self.remove((s, p, o))
 
     def roots(self) -> Iterator[rdflib.term.Node]:
         # FIXME try upstreaming to rdflib

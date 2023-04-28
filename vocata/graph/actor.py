@@ -120,8 +120,7 @@ class ActivityPubActorMixin:
         self.generate_actor_keypair(actor_uri)
 
         self._logger.debug("Writing link between %s and %s for Webfinger", acct, actor_uri)
-        # FIXME probably use alsoKnownAs
-        self.set((rdflib.URIRef(f"acct:{acct}"), VOC.webfingerHref, actor_uri))
+        self.add((actor_uri, AS.alsoKnownAs, rdflib.URIRef(f"acct:{acct}")))
 
         self._logger.debug("Linking prefix endpoints node to actor")
         endpoints_node = self.get_prefix_endpoints_node(self.get_url_prefix(actor_uri), create=True)
@@ -133,7 +132,7 @@ class ActivityPubActorMixin:
     def get_actor_uri_by_acct(self, acct: str) -> str | None:
         if not acct.startswith("acct"):
             acct = f"acct:{acct}"
-        uri = self.value(subject=acct, predicate=VOC.webfingerHref)
+        uri = self.value(predicate=AS.alsoKnownAs, object=acct)
         if uri is None:
             return None
         return str(uri)
