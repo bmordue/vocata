@@ -17,6 +17,7 @@ RUN pip3 install "/usr/src/vocata/dist/vocata-${VOCATA_VERSION}.tar.gz[server,po
 
 FROM debian:bookworm-slim AS runtime
 
+RUN apt-get -y update && apt-get -y install python3
 COPY --from=build /opt/venv /opt/venv
 
 ENV VOC_server__host=0.0.0.0
