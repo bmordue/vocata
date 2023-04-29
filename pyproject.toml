@@ -25,6 +25,7 @@ dynaconf = {version = "^3.1.12", extras = ["toml"]}
 oic = {version = "^1.5.0", optional = true}
 passlib = {version = "^1.7.4", optional = true}
 prometheus-client = "^0.16.0"
+psycopg2-binary = {version = "^2.9.6", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.261"
@@ -46,6 +47,7 @@ mkdocs-mermaid2-plugin = "^0.6.0"
 [tool.poetry.extras]
 server = ["starlette", "uvicorn", "oic", "passlib"]
 cli = ["typer"]
+postgresql = ["psycopg2-binary"]
 
 [tool.poetry.scripts]
 vocatactl = { callable = "vocata.cli:app", extras = ["cli"] }
