@@ -1,6 +1,6 @@
 # Vocata – Vocabulary-Agnostic Transport Agent
 
-![Vocata logo](vocata.svg)
+![Vocata logo](docs/vocata.svg)
 
 ## About Vocata and the Fediverse
 
