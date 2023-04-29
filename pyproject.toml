@@ -8,6 +8,11 @@ readme = "README.md"
 homepage = "https://vocata.one/"
 repository = "https://codeberg.org/Vocata/vocata"
 keywords = ["activitypub", "fediverse"]
+include = [
+    { path = "docs", format = "sdist" },
+    { path = "mkdocs.yml", format = "sdist" },
+    { path = "tests", format = "sdist" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
