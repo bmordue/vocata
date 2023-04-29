@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vocata"
-version = "0.2.0"
+version = "0.2.1"
 description = "Vocabulary Agnostic Transport Agent"
 authors = ["Dominik George <nik@naturalnet.de>"]
 license = "LGPL-3.0-or-later"

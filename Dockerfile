@@ -2,7 +2,7 @@ FROM debian:bookworm-slim AS base
 
 
 FROM base AS build
-ARG VOCATA_VERSION=0.2.0
+ARG VOCATA_VERSION=0.2.1
 
 RUN apt-get -y update && \
 	apt-get -y install python3-poetry python3-pip python3-venv git
