@@ -81,10 +81,26 @@ class ActivityPubActorMixin:
 
         local, domain = acct.split("@")
         actor_type = AS[type_.title()]
-
         actor_uri = rdflib.URIRef(LOCAL_ACTOR_URI_FORMAT.format(local=local, domain=domain))
+
+        self.create_actor(actor_uri, actor_type, username=local, name=name, force=force)
+
+        self._logger.debug("Writing link between %s and %s for Webfinger", acct, actor_uri)
+        self.add((actor_uri, AS.alsoKnownAs, rdflib.URIRef(f"acct:{acct}")))
+
+        self._logger.info("Created actor for %s with ID %s", acct, actor_uri)
+        return actor_uri
+
+    def create_actor(
+        self,
+        actor_uri: rdflib.URIRef,
+        actor_type: rdflib.URIRef,
+        username: str | None = None,
+        name: str | None = None,
+        force: bool = False,
+    ):
         if not self.is_local_prefix(str(actor_uri)) and not force:
-            raise ValueError(f"{domain} is not a local prefix")
+            raise ValueError(f"{actor_uri} is not in a local prefix")
 
         inbox_uri = rdflib.URIRef(f"{actor_uri}/inbox")
         outbox_uri = rdflib.URIRef(f"{actor_uri}/outbox")
@@ -92,7 +108,7 @@ class ActivityPubActorMixin:
         followers_uri = rdflib.URIRef(f"{actor_uri}/followers")
 
         for uri in (actor_uri, inbox_uri, outbox_uri, following_uri, followers_uri):
-            if (rdflib.URIRef(uri), None, None) in self:
+            if (rdflib.URIRef(uri), None, None) in self and not force:
                 raise ValueError(f"{uri} already exists on graph")
 
         self._logger.debug("Creating collection %s", inbox_uri)
@@ -110,8 +126,10 @@ class ActivityPubActorMixin:
 
         self._logger.debug("Writing attributes and links for actor %s", actor_uri)
         self.set((actor_uri, RDF.type, actor_type))
-        self.set((actor_uri, AS.preferredUsername, rdflib.Literal(local)))
-        self.set((actor_uri, AS.name, rdflib.Literal(name)))
+        if username:
+            self.set((actor_uri, AS.preferredUsername, rdflib.Literal(username)))
+        if name:
+            self.set((actor_uri, AS.name, rdflib.Literal(name)))
         self.set((actor_uri, LDP.inbox, inbox_uri))
         self.set((actor_uri, AS.outbox, outbox_uri))
         self.set((actor_uri, AS.following, following_uri))
@@ -119,15 +137,9 @@ class ActivityPubActorMixin:
 
         self.generate_actor_keypair(actor_uri)
 
-        self._logger.debug("Writing link between %s and %s for Webfinger", acct, actor_uri)
-        self.add((actor_uri, AS.alsoKnownAs, rdflib.URIRef(f"acct:{acct}")))
-
         self._logger.debug("Linking prefix endpoints node to actor")
         endpoints_node = self.get_prefix_endpoints_node(self.get_url_prefix(actor_uri), create=True)
         self.set((actor_uri, AS.endpoints, endpoints_node))
-
-        self._logger.info("Created actor for %s with ID %s", acct, actor_uri)
-        return actor_uri
 
     def get_actor_uri_by_acct(self, acct: str) -> str | None:
         if not acct.startswith("acct"):

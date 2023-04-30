@@ -75,7 +75,7 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
             return JSONResponse({"error": str(ex)}, 401)
         request.state.graph._logger.info("Actor was determined as %s", request.state.actor)
 
-        request.state.subject = str(request.url)
+        request.state.subject = str(request.url).removesuffix("/")
 
         response = await call_next(request)
 

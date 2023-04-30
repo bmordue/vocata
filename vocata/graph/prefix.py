@@ -72,6 +72,16 @@ class ActivityPubPrefixMixin:
         self.set((uri, VOC.isLocal, rdflib.Literal(is_local)))
 
         if is_local:
+            if not self.is_an_actor(prefix):
+                domain = urlparse(str(uri)).netloc
+                self.create_actor(
+                    uri,
+                    AS.Service,
+                    username=domain,
+                    name=f"Vocata instance at {domain}",
+                    force=True,
+                )
+
             self._logger.debug("Ensuring existence of prefix endpoints")
             if reset_endpoints:
                 self.reset_prefix_endpoints(prefix)

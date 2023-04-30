@@ -31,7 +31,7 @@ class ActivityPubGraph(
         *args,
         logger: logging.Logger | None = None,
         database: str | None = None,
-        **kwargs
+        **kwargs,
     ):
         self._logger = logger or logging.getLogger(__name__)
         self._database = database
@@ -70,6 +70,16 @@ class ActivityPubGraph(
             self._logger.debug("Replacing webfingerHref for %s with alsoKnownAs on %s", s, o)
             self.add((o, AS.alsoKnownAs, s))
             self.remove((s, p, o))
+
+        # 2023-04-30 Local prefices should be a Service actor
+        for s in self.subjects(predicate=VOC.isLocal, object=rdflib.Literal(True), unique=True):
+            if (s, RDF.type, AS.Service) not in self:
+                from urllib.parse import urlparse
+
+                domain = urlparse(str(s)).netloc
+                self.create_actor(
+                    s, AS.Service, username=domain, name=f"Vocata instance at {domain}", force=True
+                )
 
     def roots(self) -> Iterator[rdflib.term.Node]:
         # FIXME try upstreaming to rdflib
