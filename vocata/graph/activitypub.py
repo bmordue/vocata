@@ -80,6 +80,7 @@ class ActivityPubGraph(
                 self.create_actor(
                     s, AS.Service, username=domain, name=f"Vocata instance at {domain}", force=True
                 )
+                self.add((s, AS.alsoKnownAs, rdflib.URIRef(f"acct:{domain}@{domain}")))
 
     def roots(self) -> Iterator[rdflib.term.Node]:
         # FIXME try upstreaming to rdflib
