@@ -54,7 +54,7 @@ class ActivityPubActivityMixin:
                 # FIXME implement
                 raise NotImplementedError("Implicit Create not implemented")
             else:
-                raise TypeError("The root ist not an Activity")
+                raise TypeError("The root is not an Activity")
         else:
             raise TypeError("The root is neither an Activity nor an Object")
 
@@ -66,7 +66,7 @@ class ActivityPubActivityMixin:
         if self.is_an_outbox(target):
             # Outbox activities and objects must get reassigned IDs
             # FIXME must take care to have the object in the CBD in the first place
-            self._logger.debug("Received activity at outbox; reassining IDs")
+            self._logger.debug("Received activity at outbox; reassigning IDs")
             new_cbd.reassign_id(activity, target, "Activity")
             new_cbd.reassign_id(object_, target)
         # FIXME Do we need to verify the ID for inbox posts?
@@ -178,7 +178,7 @@ class ActivityPubActivityMixin:
 
         if not self.is_authorized(actor, followed_object, AccessMode.ACCEPT_FOLLOW):
             # FIXME use proper exception
-            raise Exception(f"Actoor {actor} is not authorized to accept {follow_activity}")
+            raise Exception(f"Actor {actor} is not authorized to accept {follow_activity}")
 
         collection = self.value(subject=recipient, predicate=AS.following)
         if collection is None:
@@ -202,7 +202,7 @@ class ActivityPubActivityMixin:
 
         if not self.is_authorized(actor, target, AccessMode.ADD):
             # FIXME use proper exception
-            raise Exception(f"Actoor {actor} is not authorized to add to {target}")
+            raise Exception(f"Actor {actor} is not authorized to add to {target}")
 
         self.add_to_collection(target, object_)
         return {f"Added {object_} to {target}"}
@@ -267,7 +267,7 @@ class ActivityPubActivityMixin:
     ) -> set[str]:
         if not self.is_authorized(actor, object_, AccessMode.DELETE):
             # FIXME use proper exception
-            raise Exception(f"Actoor {actor} is not authorized to delete {object_}")
+            raise Exception(f"Actor {actor} is not authorized to delete {object_}")
 
         self._logger.info("Removing %s from graph", object_)
         self.remove((object_, None, None))
@@ -320,7 +320,7 @@ class ActivityPubActivityMixin:
 
         if not self.is_authorized(actor, followed_object, AccessMode.REJECT_FOLLOW):
             # FIXME use proper exception
-            raise Exception(f"Actoor {actor} is not authorized to reject {follow_activity}")
+            raise Exception(f"Actor {actor} is not authorized to reject {follow_activity}")
 
         collection = self.value(subject=recipient, predicate=AS.following)
         if collection is None:
@@ -344,7 +344,7 @@ class ActivityPubActivityMixin:
 
         if not self.is_authorized(actor, target, AccessMode.REMOVE):
             # FIXME use proper exception
-            raise Exception(f"Actoor {actor} is not authorized to remove from {target}")
+            raise Exception(f"Actor {actor} is not authorized to remove from {target}")
 
         self.remove_from_collection(target, object_)
         return {f"Removed {object_} from {target}"}

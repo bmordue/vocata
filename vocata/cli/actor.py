@@ -60,7 +60,7 @@ def set_password(
         ..., help="Login password for C2S", prompt=True, confirmation_prompt=True, hide_input=True
     ),
 ):
-    """Set C2S loing password for an actor"""
+    """Set C2S login password for an actor"""
     account = ctx.obj["current_account"]
 
     with ctx.obj["graph"] as graph:
