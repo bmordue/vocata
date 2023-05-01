@@ -61,13 +61,13 @@ def subjects(
 def shell(ctx: typer.Context):
     """Run interactive Python shell with graph loaded"""
 
-    ctx.obj["log"].info("graph = ActivityPubGraph(...)")
-    user_ns = {
-        "graph": ctx.obj["graph"],
-    }
+    user_ns = {}
 
     ctx.obj["log"].info("from vocata.graph.schema import %s", ", ".join(schema.__all__))
     for name in schema.__all__:
         user_ns[name] = getattr(schema, name)
 
-    start_ipython(argv=[], user_ns=user_ns)
+    with ctx.obj["graph"] as graph:
+        ctx.obj["log"].info("graph = ActivityPubGraph(...)")
+        user_ns["graph"] = graph
+        start_ipython(argv=[], user_ns=user_ns)
