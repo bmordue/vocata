@@ -4,7 +4,7 @@ pipeline:
     commands:
       - apk add zola git
       - git submodule update --init --recursive
-      - cd docs/; zola build; cd..
+      - cd docs/; zola build; cd ..
   deploy:
     image: alpine
     secrets: [ACCESS_TOKEN]
