@@ -14,6 +14,7 @@ HAS_ACTOR = AS.actor
 HAS_AUTHOR = AS.actor | AS.attributedTo
 HAS_BOX = LDP.inbox | AS.outbox | AS.following | AS.followers
 # FIXME maybe add transient predicate to object author/audience as well
+# FIXME maybe also dereference collections affected here (and in other rules)
 HAS_AFFECTED = AS.object | AS.target | AS.origin
 
 PUBLIC_ACTOR = AS.Public
