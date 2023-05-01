@@ -23,7 +23,7 @@ timezone = "Europe/Berlin"
 [[extra.menu.main]]
 name = "Docs"
 section = "docs"
-url = "/docs/about/introduction/"
+url = "/docs/introduction/"
 weight = 10
 
 [[extra.menu.main]]
