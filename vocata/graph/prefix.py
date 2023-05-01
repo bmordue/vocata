@@ -1,23 +1,9 @@
 from urllib.parse import urljoin, urlparse
 
 import rdflib
-import requests
 import shortuuid
 
 from .schema import AS, RDF, VOC
-
-_OAUTH_METADATA_URIS = [
-    ".well-known/openid-configuration",
-    ".well-known/oauth-authorization-server",
-]
-
-_CLAIM_ENDPOINT_MAP = {
-    "issuer": AS.oauthIssuer,
-    "authorization_endpoint": AS.oauthAuthorizationEndpoint,
-    "token_endpoint": AS.oauthTokenEndpoint,
-    "registration_endpoint": AS.oauthRegistrationEndpoint,
-    "jwks_uri": AS.oauthJWKSUri,
-}
 
 
 class ActivityPubPrefixMixin:
@@ -31,40 +17,6 @@ class ActivityPubPrefixMixin:
     def is_local_prefix(self, prefix: str) -> bool:
         uri = self.get_url_prefix(prefix)
         return (uri, VOC.isLocal, rdflib.Literal(True)) in self
-
-    # FIXME rethink with a clear OIDC concept
-    def set_prefix_oauth_issuer(self, prefix: str, issuer: str):
-        self._logger.debug("Setting OAuth issuer for %s to %s", prefix, issuer)
-
-        headers = {
-            "User-Agent": self._user_agent,
-            "Accept": "application/json",
-        }
-        config = {}
-        for path in _OAUTH_METADATA_URIS:
-            url = urljoin(f"{issuer}/", path)
-            self._logger.debug("Trying to fetch OAuth meta-data from %s", url)
-            result = requests.get(url, headers=headers)
-            if result.ok:
-                self._logger.debug("Found OAuth meta-data at %s", url)
-                config = result.json()
-                break
-            self._logger.debug("No OAuth meta-data at %s", url)
-
-        if "issuer" not in config:
-            raise KeyError("No (valid) OAuth meta-data found")
-        elif config["issuer"] != issuer:
-            raise ValueError(
-                "Issuer %s is different from expected issuer %s", config["issuer"], issuer
-            )
-
-        endpoints_node = self.get_prefix_endpoints_node(prefix, create=True)
-        triples = set()
-        for claim, endpoint_predicate in _CLAIM_ENDPOINT_MAP.items():
-            self._logger.debug("Setting %s = %s", claim, config[claim])
-            triples.add((endpoints_node, endpoint_predicate, rdflib.Literal(config[claim])))
-        for triple in triples:
-            self.set(triple)
 
     def set_local_prefix(self, prefix: str, is_local: bool = True, reset_endpoints: bool = True):
         uri = self.get_url_prefix(prefix)
@@ -89,7 +41,6 @@ class ActivityPubPrefixMixin:
             else:
                 self.get_prefix_endpoints_node(prefix, create=True)
 
-    # FIXME rethink with a clear OIDC concept
     def get_prefix_endpoints_node(
         self, prefix: str, create: bool = False
     ) -> rdflib.term.BNode | None:
@@ -98,7 +49,6 @@ class ActivityPubPrefixMixin:
             endpoints_node = self.reset_prefix_endpoints(prefix)
         return endpoints_node
 
-    # FIXME rethink with a clear OIDC concept
     def get_prefix_endpoint(self, prefix: str, endpoint: str) -> str:
         endpoints_node = self.get_prefix_endpoints_node(prefix)
         if endpoints_node is None:
@@ -107,8 +57,9 @@ class ActivityPubPrefixMixin:
         url = self.value(subject=endpoints_node, predicate=AS[endpoint], default="")
         return str(url) or None
 
-    # FIXME rethink with a clear OIDC concept
-    def reset_prefix_endpoints(self, prefix: str) -> rdflib.term.BNode:
+    def reset_prefix_endpoints(
+        self, prefix: str, endpoints: dict[str, str] | None = None
+    ) -> rdflib.term.BNode:
         if not self.is_local_prefix(prefix):
             raise ValueError(f"{prefix} is not a local prefix")
         self._logger.info("Resetting/creating endpoints node for prefix %s", prefix)
@@ -119,6 +70,10 @@ class ActivityPubPrefixMixin:
             self.set((rdflib.URIRef(prefix), AS.endpoints, endpoints_node))
 
         self.remove((endpoints_node, None, None))
+
+        if endpoints is not None:
+            for endpoint, url in endpoints.items():
+                self.add((endpoints_node, AS[endpoint], rdflib.Literal(url)))
 
         return endpoints_node
 

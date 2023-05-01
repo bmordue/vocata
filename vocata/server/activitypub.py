@@ -59,9 +59,8 @@ class ActivityPubEndpoint(HTTPEndpoint):
         if auth is not True:
             return JSONResponse({"error": auth[1]}, auth[0])
 
-        # FIXME read here; needs fixing of timeout
-        doc = request.state.json
         try:
+            doc = await request.json()
             new_uri = request.state.graph.handle_activity_jsonld(
                 doc, request.state.subject, request.state.actor
             )
@@ -79,3 +78,22 @@ class ActivityPubEndpoint(HTTPEndpoint):
 
         # FIXME return correct content type
         return JSONResponse({}, 201, headers={"Location": str(new_uri)}, background=task)
+
+
+class ProxyEndpoint(ActivityPubEndpoint):
+    async def post(self, request: Request) -> JSONResponse:
+        if not request.state.graph.is_local_prefix(request.state.actor):
+            return JSONResponse({"error": "Only authenticated local actors allowed"}, 403)
+
+        async with request.form() as form:
+            if "id" not in form:
+                return JSONResponse({"error": "Must provide id parameter in body"}, 400)
+            real_id = form["id"]
+
+        # FIXME add security measures to not randomly pull stuff
+        # FIXME use caching
+        request.state.graph.pull(real_id, request.state.actor)
+
+        # Once authorized, we can simply fake being authoritative for the subject ;)
+        request.state.subject = real_id
+        return await super().get(request)

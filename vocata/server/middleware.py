@@ -63,12 +63,6 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
         return actor
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # FIXME fix timeout for real
-        try:
-            request.state.json = await request.json()
-        except:
-            pass
-
         try:
             request.state.actor = await self.determine_actor(request)
         except Exception as ex:
@@ -76,6 +70,19 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
         request.state.graph._logger.info("Actor was determined as %s", request.state.actor)
 
         request.state.subject = str(request.url).removesuffix("/")
+
+        if request.state.graph.is_local_prefix(request.state.subject):
+            prefix = request.state.graph.get_url_prefix(request.state.subject)
+            if prefix not in request.state.used_prefixes:
+                # Reset prefix endpoints if we didn't already do that
+                endpoints = {
+                    "proxyUrl": request.app.url_path_for("functional:proxy").make_absolute_url(
+                        base_url=request.base_url
+                    ),
+                }
+                request.state.graph.reset_prefix_endpoints(prefix, endpoints)
+
+                request.state.used_prefixes.add(prefix)
 
         response = await call_next(request)
 

@@ -8,7 +8,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from ..graph import ActivityPubGraph
 from ..settings import get_settings
-from .activitypub import ActivityPubEndpoint
+from .activitypub import ActivityPubEndpoint, ProxyEndpoint
 from .metrics import MetricsEndpoint, RequestMetricsMiddleware, get_metrics_registry
 from .middleware import ActivityPubActorMiddleware
 from .nodeinfo import NodeInfoEndpoint, nodeinfo_wellknown
@@ -37,6 +37,7 @@ routes = [
         routes=[
             Route("/metrics", MetricsEndpoint, name="metrics"),
             Route("/nodeinfo", NodeInfoEndpoint, name="nodeinfo"),
+            Route("/proxy", ProxyEndpoint, name="proxy", methods=["POST"]),
         ],
         name="functional",
     ),
@@ -55,6 +56,7 @@ async def _lifespan(app: Starlette) -> dict:
         yield {
             "graph": graph,
             "metrics_registry": get_metrics_registry(metrics_tmp_dir),
+            "used_prefixes": set(),
         }
 
 
