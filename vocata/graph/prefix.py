@@ -81,6 +81,7 @@ class ActivityPubPrefixMixin:
                     name=f"Vocata instance at {domain}",
                     force=True,
                 )
+                self.add((uri, AS.alsoKnownAs, rdflib.URIRef(f"acct:{domain}@{domain}")))
 
             self._logger.debug("Ensuring existence of prefix endpoints")
             if reset_endpoints:
