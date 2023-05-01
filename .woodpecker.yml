@@ -14,7 +14,7 @@ pipeline:
       - git config --global user.email "mail@ci.codeberg.org"
       - git config --global user.name "Codeberg CI"
       # deploy changes
-      - git clone https://"$${ACCESS_TOKEN}"@codeberg.org/Vocata/docs.vocata.one.git /pages
+      - git clone https://"$${ACCESS_TOKEN}"@codeberg.org/Vocata/pages-docs.git /pages
       - rsync -r --delete --exclude-from="docs/.rsyncignore" docs/public/ docs/.domains docs/README.md docs/LICENSE /pages
       - cd /pages
       - git add -A
