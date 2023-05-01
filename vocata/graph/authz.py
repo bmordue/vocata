@@ -13,6 +13,8 @@ HAS_TRANSIENT_INBOXES = HAS_TRANSIENT_AUDIENCE / LDP.inbox
 HAS_ACTOR = AS.actor
 HAS_AUTHOR = AS.actor | AS.attributedTo
 HAS_BOX = LDP.inbox | AS.outbox | AS.following | AS.followers
+# FIXME maybe add transient predicate to object author/audience as well
+HAS_AFFECTED = AS.object | AS.target | AS.origin
 
 PUBLIC_ACTOR = AS.Public
 
@@ -57,6 +59,11 @@ class ActivityPubAuthzMixin:
         self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str
     ) -> bool:
         return (subject, HAS_AUDIENCE, actor) in self
+
+    def is_affected(
+        self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str
+    ) -> bool:
+        return (subject, HAS_AFFECTED, actor) in self
 
     def is_public(self, subject: rdflib.term.Identifier | str) -> bool:
         return (subject, HAS_AUDIENCE, PUBLIC_ACTOR) in self
@@ -103,6 +110,9 @@ class ActivityPubAuthzMixin:
             elif self.is_recipient(actor, subject):
                 # Direct recipients may see activities
                 action, reason = True, "is recipient of object"
+            elif self.is_affected(actor, subject):
+                # Actors affected by an activity may read it
+                action, reason = True, "is affected by activity"
             elif self.is_mention_of(actor, subject):
                 # FIXME reconsider this properly
                 # Mentioned actors may see their mentions
