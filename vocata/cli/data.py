@@ -1,9 +1,12 @@
 import json
+from IPython import start_ipython
 from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.table import Table
+
+from ..graph import schema
 
 
 app = typer.Typer(help="Manage ActivityPub data in graph")
@@ -52,3 +55,19 @@ def subjects(
 
     console = Console()
     console.print(table)
+
+
+@app.command()
+def shell(ctx: typer.Context):
+    """Run interactive Python shell with graph loaded"""
+
+    ctx.obj["log"].info("graph = ActivityPubGraph(...)")
+    user_ns = {
+        "graph": ctx.obj["graph"],
+    }
+
+    ctx.obj["log"].info("from vocata.graph.schema import %s", ", ".join(schema.__all__))
+    for name in schema.__all__:
+        user_ns[name] = getattr(schema, name)
+
+    start_ipython(argv=[], user_ns=user_ns)
