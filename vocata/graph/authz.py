@@ -3,7 +3,7 @@ from enum import StrEnum
 import rdflib
 from rdflib.paths import ZeroOrMore
 
-from .schema import ACTOR_TYPES, AS, LDP, RDF, SEC, VOC
+from .schema import AS, LDP, RDF, SEC, VOC
 
 # FIXME validate against spec
 HAS_AUDIENCE = AS.audience | AS.to | AS.bto | AS.cc | AS.bcc
@@ -43,9 +43,8 @@ class ActivityPubAuthzMixin:
         return (None, AS.outbox, subject) in self
 
     def is_an_actor(self, subject: rdflib.term.Identifier | str) -> bool:
-        return subject != PUBLIC_ACTOR and (
-            self.value(subject=subject, predicate=RDF.type) in ACTOR_TYPES
-            or (None, AS.actor, subject) in self
+        return (
+            subject != PUBLIC_ACTOR and self.value(subject=subject, predicate=LDP.inbox) is not None
         )
 
     def is_an_actor_public_key(self, subject: rdflib.term.Identifier | str) -> bool:
