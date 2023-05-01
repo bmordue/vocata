@@ -15,7 +15,7 @@ pipeline:
       - git config --global user.name "Codeberg CI"
       # deploy changes
       - git clone https://"$${ACCESS_TOKEN}"@codeberg.org/Vocata/docs.vocata.one.git /pages
-      - rsync -r --delete docs/public/ docs/.domains docs/README.md docs/LICENSE /pages
+      - rsync -r --delete --exclude-from="docs/.rsyncignore" docs/public/ docs/.domains docs/README.md docs/LICENSE /pages
       - cd /pages
       - git add -A
       - git commit -m "Generate website - based on commit ${CI_COMMIT_SHA}"
