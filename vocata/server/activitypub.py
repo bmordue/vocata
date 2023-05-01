@@ -60,6 +60,9 @@ class ActivityPubEndpoint(HTTPEndpoint):
             return JSONResponse({"error": auth[1]}, auth[0])
 
         try:
+            # FIXME workaround for early read together with https://github.com/encode/starlette/pull/1519
+            request._body = request.state.body
+
             doc = await request.json()
             new_uri = request.state.graph.handle_activity_jsonld(
                 doc, request.state.subject, request.state.actor
@@ -85,6 +88,8 @@ class ProxyEndpoint(ActivityPubEndpoint):
         if not request.state.graph.is_local_prefix(request.state.actor):
             return JSONResponse({"error": "Only authenticated local actors allowed"}, 403)
 
+        # FIXME workaround for early read together with https://github.com/encode/starlette/pull/1519
+        request._body = request.state.body
         async with request.form() as form:
             if "id" not in form:
                 return JSONResponse({"error": "Must provide id parameter in body"}, 400)

@@ -71,7 +71,7 @@ class ActivityPubGraph(
             self.add((o, AS.alsoKnownAs, s))
             self.remove((s, p, o))
 
-        # 2023-04-30 Local prefices should be a Service actor
+        # 2023-04-30 Local prefixes should be a Service actor
         for s in self.subjects(predicate=VOC.isLocal, object=rdflib.Literal(True), unique=True):
             if (s, RDF.type, AS.Service) not in self:
                 from urllib.parse import urlparse

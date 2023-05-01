@@ -63,6 +63,10 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
         return actor
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        # We need to read early because some clients have really short timeouts
+        # FIXME try to avoid this
+        request.state.body = await request.body()
+
         try:
             request.state.actor = await self.determine_actor(request)
         except Exception as ex:
