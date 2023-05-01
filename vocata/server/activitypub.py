@@ -12,9 +12,6 @@ from ..graph.federation import CONTENT_TYPE
 class ActivityPubEndpoint(HTTPEndpoint):
     ACCEPT_TYPES: ClassVar[set[str]] = {CONTENT_TYPE, "application/activity+json"}
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def _check_auth(
         self, request: Request, mode: AccessMode = AccessMode.READ
     ) -> bool | tuple[int, str]:
