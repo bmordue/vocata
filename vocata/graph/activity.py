@@ -65,10 +65,8 @@ class ActivityPubActivityMixin:
 
         if self.is_an_outbox(target):
             # Outbox activities and objects must get reassigned IDs
-            # FIXME must take care to have the object in the CBD in the first place
             self._logger.debug("Received activity at outbox; reassigning IDs")
             new_cbd.reassign_id(activity, target, "Activity")
-            new_cbd.reassign_id(object_, target)
         # FIXME Do we need to verify the ID for inbox posts?
         #  i.e. to not overwrite an existing activity, or to prevent spoofing?
 
@@ -81,7 +79,6 @@ class ActivityPubActivityMixin:
             raise ValueError(
                 "Activity actor %s is not the authenticated actor %s", actor, request_actor
             )
-        # FIXME also check that box owner is in audience?
 
         # Amend activity with some functional values for later processing
         new_cbd.set((activity, VOC.receivedAt, rdflib.Literal(datetime.now())))
