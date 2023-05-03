@@ -41,7 +41,7 @@ class ActivityPubActivityMixin:
         #  node from here. This ensures we are not receiving spoofed
         #  publicly dereferencable objects; we will pull any referenced
         #  objects again later
-        new_cbd = new_g.cbd(root)
+        new_cbd = new_g.cbd(root, target_graph=self.__class__(None))
 
         root_type = new_cbd.value(subject=root, predicate=RDF.type)
         self._logger.debug("Incoming object is of type %s", root_type)
