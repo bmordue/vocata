@@ -177,14 +177,15 @@ class ActivityPubActivityMixin:
             # FIXME use proper exception
             raise Exception(f"Actor {actor} is not authorized to accept {follow_activity}")
 
-        collection = self.value(subject=recipient, predicate=AS.following)
+        collection = self.value(subject=recipient, predicate=AS.followers)
         if collection is None:
             # FIXME create collection
-            self._logger.warning("Actor %s does not have a following collection", recipient)
-            return {f"{recipient} does not have following collection; no side effects to carry out"}
+            self._logger.warning("Actor %s does not have a followers collection", recipient)
+            return {f"{recipient} does not have followers collection; no side effects to carry out"}
 
-        self.add_to_collection(collection, actor)
-        return {f"actor added to following collection of {recipient}"}
+        follower = self.value(subject=follow_activity, predicate=AS.actor)
+        self.add_to_collection(collection, follower)
+        return {f"{follower} added to followers collection of {recipient}"}
 
     def carry_out_add(
         self,
