@@ -154,7 +154,7 @@ class JSONLDMixin:
         elif isinstance(context, str) and context != norm_context:
             data["@context"] = [context, norm_context]
         elif isinstance(context, list) and norm_context not in context:
-            data["@cotnext"].append(norm_context)
+            data["@context"].append(norm_context)
         elif isinstance(context, dict) and norm_context not in context.values():
             data["@context"]["as"] = norm_context
 
