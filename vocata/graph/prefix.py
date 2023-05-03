@@ -88,7 +88,7 @@ class ActivityPubPrefixMixin:
 
     def reassign_id(self, subject: str, prefix: str, fallback_ns: str = "Object") -> rdflib.URIRef:
         new_id = self.generate_id(subject, prefix, fallback_ns)
-        self._logger.debug("Replacing subjects with ID %S with %s", subject, new_id)
+        self._logger.debug("Replacing subjects with ID %s with %s", subject, new_id)
 
         for _, p, o in self.triples((subject, None, None)):
             self.add((new_id, p, o))
