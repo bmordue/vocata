@@ -182,18 +182,21 @@ class ActivityPubActivityMixin:
         follow_actor = self.value(subject=follow_activity, predicate=AS.actor)
         following_collection = self.value(subject=follow_actor, predicate=AS.following)
         if following_collection is not None:
-            self.add_to_collection(following_collection, actor)
-            results.add(f"{actor} added to following collection of {recipient}")
+            if self.is_local_prefix(following_collection):
+                self.add_to_collection(following_collection, actor)
+                results.add(f"{actor} added to following collection of {follow_actor}")
+            else:
+                self._logger.debug("Not adding to following collection (not local)")
         else:
             # FIXME create collection
-            self._logger.warning("Actor %s does not have a following collection", recipient)
-            results.add(f"{recipient} does not have following collection")
+            self._logger.warning("Actor %s does not have a following collection", follow_actor)
+            results.add(f"{follow_actor} does not have following collection")
 
         followers_collection = self.value(subject=actor, predicate=AS.followers)
         if followers_collection is not None:
             if self.is_local_prefix(followers_collection):
-                self.add_to_collection(followers_collection, recipient)
-                results.add(f"{recipient} added to followers collection of {actor}")
+                self.add_to_collection(followers_collection, follow_actor)
+                results.add(f"{follow_actor} added to followers collection of {actor}")
             else:
                 self._logger.debug("Not adding to followers collection (not local)")
         else:
