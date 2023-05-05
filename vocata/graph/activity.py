@@ -179,7 +179,8 @@ class ActivityPubActivityMixin:
 
         results = set()
 
-        following_collection = self.value(subject=recipient, predicate=AS.following)
+        follow_actor = self.value(subject=follow_activity, predicate=AS.actor)
+        following_collection = self.value(subject=follow_actor, predicate=AS.following)
         if following_collection is not None:
             self.add_to_collection(following_collection, actor)
             results.add(f"{actor} added to following collection of {recipient}")
