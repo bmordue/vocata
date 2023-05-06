@@ -24,7 +24,7 @@ def local_prefix(graph):
 def local_domain(local_prefix):
     return local_prefix.removeprefix("https://")
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def local_actors(graph, local_domain):
     actors = []
     for i in range(3):
