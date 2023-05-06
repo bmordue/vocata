@@ -177,14 +177,34 @@ class ActivityPubActivityMixin:
             # FIXME use proper exception
             raise Exception(f"Actor {actor} is not authorized to accept {follow_activity}")
 
-        collection = self.value(subject=recipient, predicate=AS.following)
-        if collection is None:
-            # FIXME create collection
-            self._logger.warning("Actor %s does not have a following collection", recipient)
-            return {f"{recipient} does not have following collection; no side effects to carry out"}
+        results = set()
 
-        self.add_to_collection(collection, actor)
-        return {f"actor added to following collection of {recipient}"}
+        follow_actor = self.value(subject=follow_activity, predicate=AS.actor)
+        following_collection = self.value(subject=follow_actor, predicate=AS.following)
+        if following_collection is not None:
+            if self.is_local_prefix(following_collection):
+                self.add_to_collection(following_collection, actor)
+                results.add(f"{actor} added to following collection of {follow_actor}")
+            else:
+                self._logger.debug("Not adding to following collection (not local)")
+        else:
+            # FIXME create collection
+            self._logger.warning("Actor %s does not have a following collection", follow_actor)
+            results.add(f"{follow_actor} does not have following collection")
+
+        followers_collection = self.value(subject=actor, predicate=AS.followers)
+        if followers_collection is not None:
+            if self.is_local_prefix(followers_collection):
+                self.add_to_collection(followers_collection, follow_actor)
+                results.add(f"{follow_actor} added to followers collection of {actor}")
+            else:
+                self._logger.debug("Not adding to followers collection (not local)")
+        else:
+            # FIXME create collection
+            self._logger.warning("Actor %s does not have a followers collection", actor)
+            results.add(f"{actor} does not have followers collection")
+
+        return results
 
     def carry_out_add(
         self,
