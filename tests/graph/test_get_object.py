@@ -1,3 +1,4 @@
+from typing import Any
 from httpx import BasicAuth
 import pytest
 from rdflib import Graph, URIRef, Literal, RDF
@@ -14,7 +15,7 @@ AP_CONTENT_TYPES = {
 OBJECT_CONTEXT = "https://www.w3.org/ns/activitystreams"
 
 
-def assert_object_jsonld_context(message: dict) -> None:
+def assert_object_jsonld_context(message: dict):
     message_context = message["@context"]
     assert (
         OBJECT_CONTEXT in message_context
@@ -26,7 +27,7 @@ def assert_object_jsonld_context(message: dict) -> None:
 ACTOR_CONTEXT = [OBJECT_CONTEXT, "https://w3id.org/security/v1"]
 
 
-def assert_actor_jsonld_context(message: dict) -> None:
+def assert_actor_jsonld_context(message: dict):
     message_context = message["@context"]
     for required_context in ACTOR_CONTEXT:
         assert required_context in message_context
@@ -42,7 +43,7 @@ def assert_collection(message: dict, *, iri: URIRef, ordered: bool, item_count: 
     # No orderedItems when item_count is zero.
     items_ = AS.orderedItems if ordered else AS.items
     assert item_count == 0 or items_.Fragment in message
- 
+
 
 def set_up_actor(client: TestClient, graph: Graph) -> URIRef:
     acct_name = f"test@{client.base_url.netloc.decode()}"
@@ -57,7 +58,7 @@ def set_up_note(client: TestClient, graph: Graph, content: str) -> URIRef:
     return object_iri
 
 
-def test_get_actor_unauthenticated(client, app_graph):
+def test_get_actor_unauthenticated(client: TestClient, app_graph: Graph):
     """Should be able to GET actors without authentication"""
     actor_iri = set_up_actor(client, app_graph)
 
@@ -75,7 +76,7 @@ def test_get_actor_unauthenticated(client, app_graph):
 
 @pytest.mark.skip("FIXME - as:totalItems is not compacted.")
 @pytest.mark.parametrize("box_pred", [LDP.inbox, AS.outbox])
-def test_get_actor_box_unauthenticated(client: TestClient, app_graph: Graph, box_pred: URIRef) -> None:
+def test_get_actor_box_unauthenticated(client: TestClient, app_graph: Graph, box_pred: URIRef):
     """Should be able to GET actor inbox and outbox without authentication"""
     actor_iri = set_up_actor(client, app_graph)
     box_iri = app_graph.value(subject=actor_iri, predicate=box_pred)
@@ -89,7 +90,7 @@ def test_get_actor_box_unauthenticated(client: TestClient, app_graph: Graph, box
     assert_collection(payload, iri=box_iri, ordered=True, item_count=0)
 
 
-def test_get_public_object_unauthenticated(client, app_graph):
+def test_get_public_object_unauthenticated(client: TestClient, app_graph: Graph):
     """Should be able to GET public object without authentication"""
     object_iri = set_up_note(client, app_graph, "TEST_CONTENT")
     app_graph.set((object_iri, AS.audience, AS.Public))
@@ -105,9 +106,42 @@ def test_get_public_object_unauthenticated(client, app_graph):
     assert payload[AS.content.fragment] == "TEST_CONTENT"
 
 
-# TODO get addressed object with HTTP signature (S2S)?
+def test_get_addressed_object_http_sig(client: TestClient, app_graph: Graph):
+    """Authenticated client should be able to GET an object addressed to them (HTTP signature)"""
+    actor_iri = set_up_actor(client, app_graph)
+    object_iri = set_up_note(client, app_graph, "TEST_CONTENT")
+    app_graph.set((object_iri, AS.audience, actor_iri))
+    auth = HTTPSignatureAuth(app_graph, ["(request-target)"], str(actor_iri))
+    _do_authorized_retrieval_test(client, object_iri, auth)
 
-def test_get_addressed_object_basic_auth(client, app_graph):
+
+def test_get_addressed_object_basic_auth(client: TestClient, app_graph: Graph):
+    """Authenticated client should be able to GET an object addressed to them (Basic Auth)"""
+    actor_iri = set_up_actor(client, app_graph)
+    password = "PASSWORD"
+    app_graph.set_actor_password(str(actor_iri), password)
+    account = app_graph.value(subject=actor_iri, predicate=AS.alsoKnownAs)
+    # BasicAuth will be confused by the ":" since that's a delimiter for user:pass
+    account = str(account).replace("acct:", "")
+    object_iri = set_up_note(client, app_graph, "TEST_CONTENT")
+    app_graph.set((object_iri, AS.audience, actor_iri))
+    auth = BasicAuth(account, password)
+    _do_authorized_retrieval_test(client, object_iri, auth)
+
+
+def _do_authorized_retrieval_test(client: TestClient, object_iri: URIRef, auth: Any):
+    response = client.get(object_iri, auth=auth)
+
+    assert response.status_code == 200
+    assert response.headers["Content-Type"] in AP_CONTENT_TYPES
+    payload = response.json()
+    assert_object_jsonld_context(payload)
+    assert payload[AS.id.fragment] == str(object_iri)
+    assert payload[AS.type.fragment] == AS.Note.fragment
+    assert "content" in payload
+
+
+def test_get_addressed_object_basic_auth(client: TestClient, app_graph: Graph):
     """Authenticated client should be able to GET an object addressed to them."""
     actor_iri = set_up_actor(client, app_graph)
     password = "PASSWORD"
@@ -129,7 +163,7 @@ def test_get_addressed_object_basic_auth(client, app_graph):
     assert "content" in payload
 
 
-def test_get_private_object_unauthenticated(client, app_graph):
+def test_get_private_object_unauthenticated(client: TestClient, app_graph: Graph):
     """Unauthenticated requests for non-public objects should fail."""
     object_iri = set_up_note(client, app_graph, "TEST_CONTENT")
 

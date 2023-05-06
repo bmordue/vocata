@@ -162,10 +162,14 @@ class ActivityPubActorMixin:
         return pbkdf2_sha256.verify(password, str(hash))
 
     def get_public_key_by_id(self, id_: rdflib.term.Identifier | str) -> str | None:
+        if isinstance(id_, str):
+            id_ = rdflib.URIRef(id_)
         pem = self.value(subject=id_, predicate=SEC.publicKeyPem, default="")
         return str(pem) or None
 
     def get_public_key(self, actor: rdflib.term.Identifier | str) -> tuple[str | None, str | None]:
+        if isinstance(actor, str):
+            actor = rdflib.URIRef(actor)
         id_ = self.value(subject=actor, predicate=SEC.publicKey)
         if id_ is None:
             return None, None
@@ -174,10 +178,14 @@ class ActivityPubActorMixin:
         return str(id_), str(pem)
 
     def get_private_key_by_id(self, id_: rdflib.term.Identifier | str) -> str | None:
+        if isinstance(id_, str):
+            id_ = rdflib.URIRef(id_)
         pem = self.value(subject=id_, predicate=SEC.privateKeyPem, default="")
         return str(pem) or None
 
     def get_actor_by_key_id(self, id_: rdflib.term.Identifier | str) -> str | None:
+        if isinstance(id_, str):
+            id_ = rdflib.URIRef(id_)
         actor = self.value(subject=id_, predicate=SEC.owner | SEC.controller, default="")
         return str(actor) or None
 
