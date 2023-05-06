@@ -1,6 +1,9 @@
+import os
 import pytest
 
 from vocata.graph import ActivityPubGraph
+from vocata.server.app import app
+from starlette.testclient import TestClient
 
 _graph = None
 
@@ -41,3 +44,17 @@ def local_actors(graph, local_domain):
     for actor in actors:
         graph.remove((actor, None, None))
         graph.remove((None, None, actor))
+
+
+@pytest.fixture
+def client():
+    os.environ["VOC_GRAPH__DATABASE__STORE"] = "Memory"
+    os.environ["VOC_GRAPH__DATABASE__URI"] = ""
+    with TestClient(app, base_url="https://testserver") as client:
+        graph = client.app_state["graph"]
+        graph.set_local_prefix(str(client.base_url))
+        yield client
+
+@pytest.fixture
+def app_graph(client):
+    return client.app_state["graph"]

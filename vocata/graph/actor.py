@@ -144,7 +144,7 @@ class ActivityPubActorMixin:
     def get_actor_uri_by_acct(self, acct: str) -> str | None:
         if not acct.startswith("acct"):
             acct = f"acct:{acct}"
-        uri = self.value(predicate=AS.alsoKnownAs, object=acct)
+        uri = self.value(predicate=AS.alsoKnownAs, object=rdflib.URIRef(acct))
         if uri is None:
             return None
         return str(uri)
@@ -154,6 +154,8 @@ class ActivityPubActorMixin:
         self.set((rdflib.URIRef(actor), VOC.hashedPassword, rdflib.Literal(hash)))
 
     def verify_actor_password(self, actor: str, password: str) -> bool:
+        if isinstance(actor, str):
+            actor = rdflib.URIRef(actor)
         hash = self.value(subject=actor, predicate=VOC.hashedPassword)
         if hash is None:
             return False
