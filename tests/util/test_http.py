@@ -3,12 +3,12 @@ from requests import Request
 from vocata.util.http import HTTPSignatureAuth
 
 
-def test_sign_verify(graph, actor):
+def test_sign_verify(graph, actor, local_domain):
     headers = ["(request-target)", "host", "date", "digest"]
     data = {"summary": "Test Data"}
 
     auth = HTTPSignatureAuth(graph, headers, actor=actor)
-    request = Request("POST", "https://example.com/test", json=data, auth=auth)
+    request = Request("POST", f"https://{local_domain}/test", json=data, auth=auth)
 
     prepared = request.prepare()
     assert "Signature" in prepared.headers
