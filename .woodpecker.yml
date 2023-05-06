@@ -1,4 +1,11 @@
 pipeline:
+  test:
+    group: test
+    image: alpine
+    commands:
+      - apk add poetry
+      - poetry install --with test -E server -E cli
+      - poetry run pytest
   build-docs:
     group: build
     image: alpine
