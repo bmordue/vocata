@@ -1,7 +1,7 @@
 pipeline:
   test:
     group: test
-    image: debian:bookworm-slim
+    image: debian:bookworm
     commands:
       - apt-get -y update && apt-get -y install python3-poetry
       - poetry install --with test -E server -E cli
