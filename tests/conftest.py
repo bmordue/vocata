@@ -22,7 +22,11 @@ def local_domain(local_prefix):
     return local_prefix.removeprefix("https://")
 
 @pytest.fixture(scope="module")
-def actor(graph, local_domain):
-    actor = graph.create_actor_from_acct(f"pytest1@{local_domain}", "Pytest Test Person 1", "Person", force=False)
-
-    return actor
+def local_actors(graph, local_domain):
+    actors = []
+    for i in range(3):
+        actors.append(graph.create_actor_from_acct(f"pytest{i}@{local_domain}", f"Pytest Test Person {i}", "Person", force=False))
+    yield actors
+    for actor in actors:
+        graph.remove((actor, None, None))
+        graph.remove((None, None, actor))
