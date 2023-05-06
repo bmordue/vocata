@@ -1,9 +1,9 @@
 pipeline:
   test:
     group: test
-    image: alpine
+    image: debian:bookworm-slim
     commands:
-      - apk add poetry
+      - apt-get -y update && apt-get -y install python3-poetry
       - poetry install --with test -E server -E cli
       - poetry run pytest
   build-docs:
