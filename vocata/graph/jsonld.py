@@ -161,7 +161,7 @@ class JSONLDMixin:
         # Parse into a new graph first, in case something fails
         new_g = rdflib.Graph()
         # FIXME ship normative context to not load it remotely every time
-        source = PythonInputSource(data, data["id"])
+        source = PythonInputSource(data, data.get("id", None))
         new_g.parse(source, format="json-ld")
 
         for s in set(new_g.subjects()):

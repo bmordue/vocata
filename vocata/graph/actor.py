@@ -188,5 +188,11 @@ class ActivityPubActorMixin:
 
         return str(id_), str(pem)
 
+    def get_actor_inbox(self, actor: rdflib.term.Identifier | str) -> rdflib.URIRef | None:
+        return self.value(subject=actor, predicate=LDP.inbox)
+
+    def get_actor_outbox(self, actor: rdflib.term.Identifier | str) -> rdflib.URIRef | None:
+        return self.value(subject=actor, predicate=AS.outbox)
+
 
 __all__ = ["ActivityPubActorMixin"]
