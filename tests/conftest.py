@@ -15,7 +15,10 @@ def graph():
 @pytest.fixture(scope="module")
 def local_prefix(graph):
     graph.set_local_prefix("https://example.com")
-    return "https://example.com"
+    yield "https://example.com"
+    for s, p, o in graph:
+        if s.startswith("https://example.com") or o.startswith("https://example.com"):
+            graph.remove((s, p, o))
 
 @pytest.fixture(scope="module")
 def local_domain(local_prefix):
