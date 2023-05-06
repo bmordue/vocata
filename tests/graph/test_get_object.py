@@ -42,7 +42,7 @@ def assert_collection(message: dict, *, iri: URIRef, ordered: bool, item_count: 
     assert message[AS.totalItems.fragment] == item_count
     # No orderedItems when item_count is zero.
     items_ = AS.orderedItems if ordered else AS.items
-    assert item_count == 0 or items_.Fragment in message
+    assert item_count == 0 or items_.fragment in message
 
 
 def set_up_actor(client: TestClient, graph: Graph) -> URIRef:
