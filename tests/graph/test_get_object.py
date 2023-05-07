@@ -123,26 +123,6 @@ def _do_authorized_retrieval_test(client: TestClient, object_iri: URIRef, auth: 
     assert "content" in payload
 
 
-def test_get_addressed_object_basic_auth(client: TestClient, app_graph: Graph, actor_iri: URIRef, object_iri: URIRef):
-    """Authenticated client should be able to GET an object addressed to them."""
-    password = "PASSWORD"
-    app_graph.set_actor_password(str(actor_iri), password)
-    account = app_graph.value(subject=actor_iri, predicate=AS.alsoKnownAs)
-    # BasicAuth will be confused by the ":" since that's a delimiter for user:pass
-    account = str(account).replace("acct:", "")
-    app_graph.set((object_iri, AS.audience, actor_iri))
-
-    response = client.get(object_iri, auth=BasicAuth(account, password))
-
-    assert response.status_code == 200
-    assert response.headers["Content-Type"] in AP_CONTENT_TYPES
-    payload = response.json()
-    assert_object_jsonld_context(payload)
-    assert payload[AS.id.fragment] == str(object_iri)
-    assert payload[AS.type.fragment] == AS.Note.fragment
-    assert "content" in payload
-
-
 def test_get_private_object_unauthenticated(client: TestClient, app_graph: Graph, object_iri: URIRef):
     """Unauthenticated requests for non-public objects should fail."""
     response = client.get(object_iri)
