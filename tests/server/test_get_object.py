@@ -1,8 +1,10 @@
 from typing import Any
-from httpx import BasicAuth
+
 import pytest
-from rdflib import Graph, URIRef, Literal, RDF
+from httpx import BasicAuth
+from rdflib import Graph, URIRef
 from starlette.testclient import TestClient
+
 from vocata.graph.schema import AS, LDP
 from vocata.util.http import HTTPSignatureAuth
 
@@ -13,6 +15,7 @@ AP_CONTENT_TYPES = {
 }
 
 OBJECT_CONTEXT = "https://www.w3.org/ns/activitystreams"
+ACTOR_CONTEXT = [OBJECT_CONTEXT, "https://w3id.org/security/v1"]
 
 
 def assert_object_jsonld_context(message: dict):
@@ -24,10 +27,8 @@ def assert_object_jsonld_context(message: dict):
     )
 
 
-ACTOR_CONTEXT = [OBJECT_CONTEXT, "https://w3id.org/security/v1"]
-
-
 def assert_actor_jsonld_context(message: dict):
+    # FIXME reconsider whether we should enforce having the security context or not
     message_context = message["@context"]
     for required_context in ACTOR_CONTEXT:
         assert required_context in message_context
@@ -51,7 +52,7 @@ def test_get_actor_unauthenticated(client: TestClient, actor_iri: URIRef):
 
     assert response.status_code == 200
     assert response.headers["Content-Type"] in AP_CONTENT_TYPES
-    # TODO Create some utilities for common payload checks (@context, etc.)
+    # FIXME Create some utilities for common payload checks (@context, etc.)
     payload = response.json()
     assert_actor_jsonld_context(payload)
     assert payload[AS.id.fragment] == str(actor_iri)
@@ -76,7 +77,9 @@ def test_get_actor_box_unauthenticated(
     assert_collection(payload, iri=box_iri, ordered=True, item_count=0)
 
 
-def test_get_public_object_unauthenticated(client: TestClient, app_graph: Graph, object_iri: URIRef):
+def test_get_public_object_unauthenticated(
+    client: TestClient, app_graph: Graph, object_iri: URIRef
+):
     """Should be able to GET public object without authentication"""
     app_graph.set((object_iri, AS.audience, AS.Public))
 
@@ -91,14 +94,18 @@ def test_get_public_object_unauthenticated(client: TestClient, app_graph: Graph,
     assert payload[AS.content.fragment] == "TEST_CONTENT"
 
 
-def test_get_addressed_object_http_sig(client: TestClient, app_graph: Graph, actor_iri: URIRef, object_iri: URIRef):
+def test_get_addressed_object_http_sig(
+    client: TestClient, app_graph: Graph, actor_iri: URIRef, object_iri: URIRef
+):
     """Authenticated client should be able to GET an object addressed to them (HTTP signature)"""
     app_graph.set((object_iri, AS.audience, actor_iri))
     auth = HTTPSignatureAuth(app_graph, ["(request-target)"], str(actor_iri))
     _do_authorized_retrieval_test(client, object_iri, auth)
 
 
-def test_get_addressed_object_basic_auth(client: TestClient, app_graph: Graph, actor_iri: URIRef, object_iri: URIRef):
+def test_get_addressed_object_basic_auth(
+    client: TestClient, app_graph: Graph, actor_iri: URIRef, object_iri: URIRef
+):
     """Authenticated client should be able to GET an object addressed to them (Basic Auth)"""
     password = "PASSWORD"
     app_graph.set_actor_password(str(actor_iri), password)
@@ -123,7 +130,9 @@ def _do_authorized_retrieval_test(client: TestClient, object_iri: URIRef, auth: 
     assert "content" in payload
 
 
-def test_get_addressed_object_basic_auth(client: TestClient, app_graph: Graph, actor_iri: URIRef, object_iri: URIRef):
+def test_get_addressed_object_basic_auth(
+    client: TestClient, app_graph: Graph, actor_iri: URIRef, object_iri: URIRef
+):
     """Authenticated client should be able to GET an object addressed to them."""
     password = "PASSWORD"
     app_graph.set_actor_password(str(actor_iri), password)
@@ -143,7 +152,9 @@ def test_get_addressed_object_basic_auth(client: TestClient, app_graph: Graph, a
     assert "content" in payload
 
 
-def test_get_private_object_unauthenticated(client: TestClient, app_graph: Graph, object_iri: URIRef):
+def test_get_private_object_unauthenticated(
+    client: TestClient, app_graph: Graph, object_iri: URIRef
+):
     """Unauthenticated requests for non-public objects should fail."""
     response = client.get(object_iri)
     assert response.status_code == 401
