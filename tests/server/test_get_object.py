@@ -46,76 +46,79 @@ def assert_collection(message: dict, *, iri: URIRef, ordered: bool, item_count: 
     assert item_count == 0 or items_.fragment in message
 
 
-def test_get_actor_unauthenticated(client: TestClient, actor_iri: URIRef):
+def test_get_actor_unauthenticated(client: TestClient, get_actors):
     """Should be able to GET actors without authentication"""
-    response = client.get(actor_iri)
+    with get_actors(1, client.base_url) as (actor_iri,):
+        response = client.get(actor_iri)
 
-    assert response.status_code == 200
-    assert response.headers["Content-Type"] in AP_CONTENT_TYPES
-    # FIXME Create some utilities for common payload checks (@context, etc.)
-    payload = response.json()
-    assert_actor_jsonld_context(payload)
-    assert payload[AS.id.fragment] == str(actor_iri)
-    assert payload[AS.type.fragment] == AS.Person.fragment
-    assert AS.inbox.fragment in payload
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] in AP_CONTENT_TYPES
+        # FIXME Create some utilities for common payload checks (@context, etc.)
+        payload = response.json()
+        assert_actor_jsonld_context(payload)
+        assert payload[AS.id.fragment] == str(actor_iri)
+        assert payload[AS.type.fragment] == AS.Person.fragment
+        assert AS.inbox.fragment in payload
 
 
 @pytest.mark.skip("FIXME - as:totalItems is not compacted.")
 @pytest.mark.parametrize("box_pred", [LDP.inbox, AS.outbox])
 def test_get_actor_box_unauthenticated(
-    client: TestClient, app_graph: Graph, actor_iri: URIRef, box_pred: URIRef
+    client: TestClient, graph: Graph, get_actors, box_pred: URIRef
 ):
     """Should be able to GET actor inbox and outbox without authentication"""
-    box_iri = app_graph.value(subject=actor_iri, predicate=box_pred)
+    with get_actors(1, client.base_url) as (actor_iri,):
+        box_iri = graph.value(subject=actor_iri, predicate=box_pred)
 
-    response = client.get(box_iri)
+        response = client.get(box_iri)
 
-    assert response.status_code == 200
-    assert response.headers["Content-Type"] in AP_CONTENT_TYPES
-    payload = response.json()
-    assert_object_jsonld_context(payload)
-    assert_collection(payload, iri=box_iri, ordered=True, item_count=0)
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] in AP_CONTENT_TYPES
+        payload = response.json()
+        assert_object_jsonld_context(payload)
+        assert_collection(payload, iri=box_iri, ordered=True, item_count=0)
 
 
-def test_get_public_object_unauthenticated(
-    client: TestClient, app_graph: Graph, object_iri: URIRef
-):
+def test_get_public_object_unauthenticated(client: TestClient, graph: Graph, get_notes):
     """Should be able to GET public object without authentication"""
-    app_graph.set((object_iri, AS.audience, AS.Public))
+    with get_notes(1, client.base_url) as (object_iri,):
+        graph.set((object_iri, AS.audience, AS.Public))
 
-    response = client.get(object_iri)
+        response = client.get(object_iri)
 
-    assert response.status_code == 200
-    assert response.headers["Content-Type"] in AP_CONTENT_TYPES
-    payload = response.json()
-    assert_object_jsonld_context(payload)
-    assert payload[AS.id.fragment] == str(object_iri)
-    assert payload[AS.type.fragment] == AS.Note.fragment
-    assert payload[AS.content.fragment] == "TEST_CONTENT"
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] in AP_CONTENT_TYPES
+        payload = response.json()
+        assert_object_jsonld_context(payload)
+        assert payload[AS.id.fragment] == str(object_iri)
+        assert payload[AS.type.fragment] == AS.Note.fragment
+        assert payload[AS.content.fragment].startswith("TEST_CONTENT ")
 
 
-def test_get_addressed_object_http_sig(
-    client: TestClient, app_graph: Graph, actor_iri: URIRef, object_iri: URIRef
-):
+def test_get_addressed_object_http_sig(client: TestClient, graph: Graph, get_actors, get_notes):
     """Authenticated client should be able to GET an object addressed to them (HTTP signature)"""
-    app_graph.set((object_iri, AS.audience, actor_iri))
-    auth = HTTPSignatureAuth(app_graph, ["(request-target)"], str(actor_iri))
-    _do_authorized_retrieval_test(client, object_iri, auth)
+    with get_actors(1, client.base_url) as (actor_iri,), get_notes(1, client.base_url) as (
+        object_iri,
+    ):
+        graph.set((object_iri, AS.audience, actor_iri))
+        auth = HTTPSignatureAuth(graph, ["(request-target)"], str(actor_iri))
+        _do_authorized_retrieval_test(client, object_iri, auth)
 
 
-def test_get_addressed_object_basic_auth(
-    client: TestClient, app_graph: Graph, actor_iri: URIRef, object_iri: URIRef
-):
+def test_get_addressed_object_basic_auth(client: TestClient, graph: Graph, get_actors, get_notes):
     """Authenticated client should be able to GET an object addressed to them (Basic Auth)"""
     password = "PASSWORD"
-    app_graph.set_actor_password(str(actor_iri), password)
-    account = app_graph.value(subject=actor_iri, predicate=AS.alsoKnownAs)
-    # BasicAuth will be confused by the ":" since that's a delimiter for user:pass
-    account = str(account).replace("acct:", "")
+    with get_actors(1, client.base_url) as (actor_iri,), get_notes(1, client.base_url) as (
+        object_iri,
+    ):
+        graph.set_actor_password(str(actor_iri), password)
+        account = graph.value(subject=actor_iri, predicate=AS.alsoKnownAs)
+        # BasicAuth will be confused by the ":" since that's a delimiter for user:pass
+        account = str(account).replace("acct:", "")
 
-    app_graph.set((object_iri, AS.audience, actor_iri))
-    auth = BasicAuth(account, password)
-    _do_authorized_retrieval_test(client, object_iri, auth)
+        graph.set((object_iri, AS.audience, actor_iri))
+        auth = BasicAuth(account, password)
+        _do_authorized_retrieval_test(client, object_iri, auth)
 
 
 def _do_authorized_retrieval_test(client: TestClient, object_iri: URIRef, auth: Any):
@@ -130,31 +133,31 @@ def _do_authorized_retrieval_test(client: TestClient, object_iri: URIRef, auth: 
     assert "content" in payload
 
 
-def test_get_addressed_object_basic_auth(
-    client: TestClient, app_graph: Graph, actor_iri: URIRef, object_iri: URIRef
-):
+def test_get_addressed_object_basic_auth(client: TestClient, graph: Graph, get_actors, get_notes):
     """Authenticated client should be able to GET an object addressed to them."""
     password = "PASSWORD"
-    app_graph.set_actor_password(str(actor_iri), password)
-    account = app_graph.value(subject=actor_iri, predicate=AS.alsoKnownAs)
-    # BasicAuth will be confused by the ":" since that's a delimiter for user:pass
-    account = str(account).replace("acct:", "")
-    app_graph.set((object_iri, AS.audience, actor_iri))
+    with get_actors(1, client.base_url) as (actor_iri,), get_notes(1, client.base_url) as (
+        object_iri,
+    ):
+        graph.set_actor_password(str(actor_iri), password)
+        account = graph.value(subject=actor_iri, predicate=AS.alsoKnownAs)
+        # BasicAuth will be confused by the ":" since that's a delimiter for user:pass
+        account = str(account).replace("acct:", "")
+        graph.set((object_iri, AS.audience, actor_iri))
 
-    response = client.get(object_iri, auth=BasicAuth(account, password))
+        response = client.get(object_iri, auth=BasicAuth(account, password))
 
-    assert response.status_code == 200
-    assert response.headers["Content-Type"] in AP_CONTENT_TYPES
-    payload = response.json()
-    assert_object_jsonld_context(payload)
-    assert payload[AS.id.fragment] == str(object_iri)
-    assert payload[AS.type.fragment] == AS.Note.fragment
-    assert "content" in payload
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] in AP_CONTENT_TYPES
+        payload = response.json()
+        assert_object_jsonld_context(payload)
+        assert payload[AS.id.fragment] == str(object_iri)
+        assert payload[AS.type.fragment] == AS.Note.fragment
+        assert "content" in payload
 
 
-def test_get_private_object_unauthenticated(
-    client: TestClient, app_graph: Graph, object_iri: URIRef
-):
+def test_get_private_object_unauthenticated(client: TestClient, get_notes):
     """Unauthenticated requests for non-public objects should fail."""
-    response = client.get(object_iri)
-    assert response.status_code == 401
+    with get_notes(1, client.base_url) as (object_iri,):
+        response = client.get(object_iri)
+        assert response.status_code == 401
