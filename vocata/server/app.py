@@ -51,8 +51,7 @@ async def _lifespan(app: Starlette) -> dict:
 
     # FIXME pass logger here
     with ActivityPubGraph(
-        store=settings.graph.database.store,
-        database=settings.graph.database.uri
+        store=settings.graph.database.store, database=settings.graph.database.uri
     ) as graph, TemporaryDirectory() as metrics_tmp_dir:
         yield {
             "graph": graph,

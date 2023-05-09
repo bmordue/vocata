@@ -1,22 +1,23 @@
 import os
 from contextlib import contextmanager
+from typing import Callable, Generator
 from urllib.parse import urlparse
 
 import pytest
-from rdflib import RDF, Graph, Literal, URIRef
+from rdflib import RDF, Literal, URIRef
 from starlette.testclient import TestClient
 
 from vocata.graph import ActivityPubGraph
 from vocata.graph.schema import AS
 from vocata.server.app import app
 
-_graph = None
+_graph: ActivityPubGraph | None = None
 
 DEFAULT_PREFIX = "https://example.com"
 
 
 @pytest.fixture(scope="module")
-def graph():
+def graph() -> ActivityPubGraph:
     global _graph
     if _graph is None:
         graph_existed = False
@@ -30,9 +31,11 @@ def graph():
 
 
 @pytest.fixture()
-def get_prefix(graph):
+def get_prefix(
+    graph: ActivityPubGraph,
+) -> Callable[[str | None], Generator[tuple[str, str], None, None]]:
     @contextmanager
-    def __get_prefix(prefix=DEFAULT_PREFIX):
+    def __get_prefix(prefix: str | None = DEFAULT_PREFIX) -> Generator[tuple[str, str], None, None]:
         prefix = str(prefix)
         if not graph.is_local_prefix(URIRef(prefix)):
             graph.set_local_prefix(prefix)
@@ -48,9 +51,14 @@ def get_prefix(graph):
 
 
 @pytest.fixture()
-def get_actors(graph, get_prefix):
+def get_actors(
+    graph: ActivityPubGraph,
+    get_prefix: Callable[[str | None], Generator[tuple[str, str], None, None]],
+) -> Callable[[int | None, str | None], Generator[list[URIRef], None, None]]:
     @contextmanager
-    def __get_actors(n=3, prefix=DEFAULT_PREFIX):
+    def __get_actors(
+        n: int | None = 3, prefix: str | None = DEFAULT_PREFIX
+    ) -> Generator[list[URIRef], None, None]:
         with get_prefix(prefix) as (prefix, domain):
             actors = []
             for i in range(n):
@@ -68,9 +76,14 @@ def get_actors(graph, get_prefix):
 
 
 @pytest.fixture()
-def get_notes(graph, get_prefix):
+def get_notes(
+    graph: ActivityPubGraph,
+    get_prefix: Callable[[str | None], Generator[tuple[str, str], None, None]],
+) -> Callable[[int | None, str | None], Generator[list[URIRef], None, None]]:
     @contextmanager
-    def __get_notes(n=3, prefix=DEFAULT_PREFIX):
+    def __get_notes(
+        n: int | None = 3, prefix: str | None = DEFAULT_PREFIX
+    ) -> Generator[list[URIRef], None, None]:
         with get_prefix(prefix) as (prefix, domain):
             notes = []
             for i in range(n):
@@ -87,7 +100,7 @@ def get_notes(graph, get_prefix):
 
 
 @pytest.fixture(scope="module")
-def client():
+def client() -> TestClient:
     global _graph
 
     os.environ["VOC_GRAPH__DATABASE__STORE"] = "Memory"
