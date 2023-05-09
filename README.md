@@ -157,11 +157,11 @@ Python package into your own environment:
 git clone https://codeberg.org/Vocata/vocata
 cd vocata
 poetry install -E server -E cli
-poetry run vocata-server
+poetry run vocata
 
 # Install using pip in your own environment
 pip install "vocata[server,cli]"
-vocata-server
+vocata
 ```
 
 The extras `server` and `cli` install the dependencies
