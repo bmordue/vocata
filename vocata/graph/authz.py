@@ -89,6 +89,10 @@ class ActivityPubAuthzMixin:
         subject: rdflib.term.Identifier | str,
         mode: AccessMode = AccessMode.READ,
     ) -> bool:
+        if isinstance(actor, str):
+            actor = rdflib.URIRef(actor)
+        if isinstance(subject, str):
+            subject = rdflib.URIRef(subject)
         action, reason = False, "no authz rule matched"
         if mode == AccessMode.READ:
             if self.is_public(subject):

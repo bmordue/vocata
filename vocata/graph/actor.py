@@ -144,7 +144,7 @@ class ActivityPubActorMixin:
     def get_actor_uri_by_acct(self, acct: str) -> str | None:
         if not acct.startswith("acct"):
             acct = f"acct:{acct}"
-        uri = self.value(predicate=AS.alsoKnownAs, object=acct)
+        uri = self.value(predicate=AS.alsoKnownAs, object=rdflib.URIRef(acct))
         if uri is None:
             return None
         return str(uri)
@@ -154,16 +154,22 @@ class ActivityPubActorMixin:
         self.set((rdflib.URIRef(actor), VOC.hashedPassword, rdflib.Literal(hash)))
 
     def verify_actor_password(self, actor: str, password: str) -> bool:
+        if isinstance(actor, str):
+            actor = rdflib.URIRef(actor)
         hash = self.value(subject=actor, predicate=VOC.hashedPassword)
         if hash is None:
             return False
         return pbkdf2_sha256.verify(password, str(hash))
 
     def get_public_key_by_id(self, id_: rdflib.term.Identifier | str) -> str | None:
+        if isinstance(id_, str):
+            id_ = rdflib.URIRef(id_)
         pem = self.value(subject=id_, predicate=SEC.publicKeyPem, default="")
         return str(pem) or None
 
     def get_public_key(self, actor: rdflib.term.Identifier | str) -> tuple[str | None, str | None]:
+        if isinstance(actor, str):
+            actor = rdflib.URIRef(actor)
         id_ = self.value(subject=actor, predicate=SEC.publicKey)
         if id_ is None:
             return None, None
@@ -172,10 +178,14 @@ class ActivityPubActorMixin:
         return str(id_), str(pem)
 
     def get_private_key_by_id(self, id_: rdflib.term.Identifier | str) -> str | None:
+        if isinstance(id_, str):
+            id_ = rdflib.URIRef(id_)
         pem = self.value(subject=id_, predicate=SEC.privateKeyPem, default="")
         return str(pem) or None
 
     def get_actor_by_key_id(self, id_: rdflib.term.Identifier | str) -> str | None:
+        if isinstance(id_, str):
+            id_ = rdflib.URIRef(id_)
         actor = self.value(subject=id_, predicate=SEC.owner | SEC.controller, default="")
         return str(actor) or None
 
