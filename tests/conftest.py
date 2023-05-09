@@ -14,7 +14,7 @@ _graph = None
 def graph():
     global _graph
     if _graph is None:
-        _graph = ActivityPubGraph(database="sqlite:///:memory:")
+        _graph = ActivityPubGraph(store="Memory", database="")
     with _graph as graph:
         yield graph
 
@@ -57,6 +57,7 @@ def client():
         graph.set_local_prefix(str(client.base_url))
         yield client
 
+
 @pytest.fixture
 def app_graph(client):
     return client.app_state["graph"]
@@ -80,4 +81,3 @@ def note_iri(client: TestClient, app_graph: Graph) -> URIRef:
     app_graph.set((note_iri, RDF.type, AS.Note))
     app_graph.set((note_iri, AS.content, Literal("TEST_CONTENT")))
     return note_iri
-
