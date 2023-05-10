@@ -1,0 +1,17 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Vocata
+Upstream-Contact: Dominik George <nik@naturalnet.de>
+Source: https://codeberg.org/Vocata/vocata
+
+Files:
+ docs/.domains
+ docs/.rsyncignore
+ **/*.toml
+ **/.git*
+ .vscode/
+ *.toml
+ .git*
+ poetry.lock
+Copyright: Nobody in particular
+License: CC0-1.0
+Comment: Uncopyrightable config file or build artefact

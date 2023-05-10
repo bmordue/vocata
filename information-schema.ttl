@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: © 2023 Dominik George <nik@naturalnet.de>
+#
+# SPDX-License-Identifier: LGPL-3.0-or-later OR CC-BY-SA-4.0+
+
 @prefix : <https://docs.vocata.one/information-schema#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
