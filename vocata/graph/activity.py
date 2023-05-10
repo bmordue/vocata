@@ -51,8 +51,14 @@ class ActivityPubActivityMixin:
         elif root_type in OBJECT_TYPES:
             if self.is_an_outbox(target):
                 # If the root is an object, assume a Create activity
-                # FIXME implement
-                raise NotImplementedError("Implicit Create not implemented")
+                activity = new_cbd.generate_activity_id(target)
+                new_cbd.set((activity, RDF.type, AS.Create))
+                new_cbd.set((activity, AS.actor, request_actor))
+                new_cbd.set((activity, AS.object, root))
+                for pred in [AS.to, AS.cc, AS.bto, AS.bcc, AS.audience]:
+                    for object_ in new_cbd[root:pred]:
+                        new_cbd.set((activity, pred, object_))
+                root = activity
             else:
                 raise TypeError("The root is not an Activity")
         else:
