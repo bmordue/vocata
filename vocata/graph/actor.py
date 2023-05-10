@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 from passlib.hash import pbkdf2_sha256
 
+from ..util.types import coerce_uris
 from .schema import AS, LDP, VOC, RDF, SEC
 
 USERPART_RE = r"[a-z0-9.~_!$&'()*+,;=-]([a-z0-9.~_!$&'()*+,;=-]|%[0-9a-f]{2})*"
@@ -30,11 +31,9 @@ class ActivityPubActorMixin:
         else:
             return True
 
+    @coerce_uris
     def generate_actor_keypair(self, subject: rdflib.URIRef, force: bool = False) -> rdflib.URIRef:
         self._logger.info("Generating actor keypair for %s", subject)
-
-        if not isinstance(subject, rdflib.URIRef):
-            subject = rdflib.URIRef(subject)
 
         # Verify that the actor does not have a key yet
         if (subject, SEC.publicKey, None) in self:
@@ -95,6 +94,7 @@ class ActivityPubActorMixin:
         self._logger.info("Created actor for %s with ID %s", acct, actor_uri)
         return actor_uri
 
+    @coerce_uris
     def create_actor(
         self,
         actor_uri: rdflib.URIRef,
@@ -103,7 +103,7 @@ class ActivityPubActorMixin:
         name: str | None = None,
         force: bool = False,
     ):
-        if not self.is_local_prefix(str(actor_uri)) and not force:
+        if not self.is_local_prefix(actor_uri) and not force:
             raise ValueError(f"{actor_uri} is not in a local prefix")
 
         inbox_uri = rdflib.URIRef(f"{actor_uri}/inbox")
@@ -112,7 +112,7 @@ class ActivityPubActorMixin:
         followers_uri = rdflib.URIRef(f"{actor_uri}/followers")
 
         for uri in (actor_uri, inbox_uri, outbox_uri, following_uri, followers_uri):
-            if (rdflib.URIRef(uri), None, None) in self and not force:
+            if (uri, None, None) in self and not force:
                 raise ValueError(f"{uri} already exists on graph")
 
         self._logger.debug("Creating collection %s", inbox_uri)
@@ -153,27 +153,25 @@ class ActivityPubActorMixin:
             return None
         return str(uri)
 
-    def set_actor_password(self, actor: str, password: str) -> None:
+    @coerce_uris
+    def set_actor_password(self, actor: rdflib.URIRef, password: str) -> None:
         hash = pbkdf2_sha256.hash(password)
-        self.set((rdflib.URIRef(actor), VOC.hashedPassword, rdflib.Literal(hash)))
+        self.set((actor, VOC.hashedPassword, rdflib.Literal(hash)))
 
-    def verify_actor_password(self, actor: str, password: str) -> bool:
-        if isinstance(actor, str):
-            actor = rdflib.URIRef(actor)
+    @coerce_uris
+    def verify_actor_password(self, actor: rdflib.URIRef, password: str) -> bool:
         hash = self.value(subject=actor, predicate=VOC.hashedPassword)
         if hash is None:
             return False
         return pbkdf2_sha256.verify(password, str(hash))
 
-    def get_public_key_by_id(self, id_: rdflib.term.Identifier | str) -> str | None:
-        if isinstance(id_, str):
-            id_ = rdflib.URIRef(id_)
+    @coerce_uris
+    def get_public_key_by_id(self, id_: rdflib.URIRef) -> str | None:
         pem = self.value(subject=id_, predicate=SEC.publicKeyPem, default="")
         return str(pem) or None
 
-    def get_public_key(self, actor: rdflib.term.Identifier | str) -> tuple[str | None, str | None]:
-        if isinstance(actor, str):
-            actor = rdflib.URIRef(actor)
+    @coerce_uris
+    def get_public_key(self, actor: rdflib.URIRef) -> tuple[str | None, str | None]:
         id_ = self.value(subject=actor, predicate=SEC.publicKey)
         if id_ is None:
             return None, None
@@ -181,19 +179,18 @@ class ActivityPubActorMixin:
         pem = self.get_public_key_by_id(id_)
         return str(id_), str(pem)
 
-    def get_private_key_by_id(self, id_: rdflib.term.Identifier | str) -> str | None:
-        if isinstance(id_, str):
-            id_ = rdflib.URIRef(id_)
+    @coerce_uris
+    def get_private_key_by_id(self, id_: rdflib.URIRef) -> str | None:
         pem = self.value(subject=id_, predicate=SEC.privateKeyPem, default="")
         return str(pem) or None
 
-    def get_actor_by_key_id(self, id_: rdflib.term.Identifier | str) -> str | None:
-        if isinstance(id_, str):
-            id_ = rdflib.URIRef(id_)
+    @coerce_uris
+    def get_actor_by_key_id(self, id_: rdflib.URIRef) -> str | None:
         actor = self.value(subject=id_, predicate=SEC.owner | SEC.controller, default="")
         return str(actor) or None
 
-    def get_private_key(self, actor: rdflib.term.Identifier | str) -> tuple[str | None, str | None]:
+    @coerce_uris
+    def get_private_key(self, actor: rdflib.URIRef) -> tuple[str | None, str | None]:
         id_ = self.value(subject=actor, predicate=SEC.privateKey)
         if id_ is None:
             return None, None
@@ -202,10 +199,12 @@ class ActivityPubActorMixin:
 
         return str(id_), str(pem)
 
-    def get_actor_inbox(self, actor: rdflib.term.Identifier | str) -> rdflib.URIRef | None:
+    @coerce_uris
+    def get_actor_inbox(self, actor: rdflib.URIRef) -> rdflib.URIRef | None:
         return self.value(subject=actor, predicate=LDP.inbox)
 
-    def get_actor_outbox(self, actor: rdflib.term.Identifier | str) -> rdflib.URIRef | None:
+    @coerce_uris
+    def get_actor_outbox(self, actor: rdflib.URIRef) -> rdflib.URIRef | None:
         return self.value(subject=actor, predicate=AS.outbox)
 
 

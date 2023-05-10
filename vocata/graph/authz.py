@@ -7,6 +7,7 @@ from enum import StrEnum
 import rdflib
 from rdflib.paths import ZeroOrMore
 
+from ..util.types import coerce_uris
 from .schema import AS, LDP, RDF, SEC, VOC
 
 # FIXME validate against spec
@@ -37,66 +38,63 @@ class AccessMode(StrEnum):
 
 
 class ActivityPubAuthzMixin:
-    def is_a_box(self, subject: rdflib.term.Identifier | str) -> bool:
+    @coerce_uris
+    def is_a_box(self, subject: rdflib.URIRef) -> bool:
         return (None, HAS_BOX, subject) in self
 
-    def is_an_inbox(self, subject: rdflib.term.Identifier | str) -> bool:
+    @coerce_uris
+    def is_an_inbox(self, subject: rdflib.URIRef) -> bool:
         return (None, LDP.inbox, subject) in self
 
-    def is_an_outbox(self, subject: rdflib.term.Identifier | str) -> bool:
+    @coerce_uris
+    def is_an_outbox(self, subject: rdflib.URIRef) -> bool:
         return (None, AS.outbox, subject) in self
 
-    def is_an_actor(self, subject: rdflib.term.Identifier | str) -> bool:
+    @coerce_uris
+    def is_an_actor(self, subject: rdflib.URIRef) -> bool:
         return (
             subject != PUBLIC_ACTOR and self.value(subject=subject, predicate=LDP.inbox) is not None
         )
 
-    def is_an_actor_public_key(self, subject: rdflib.term.Identifier | str) -> bool:
+    @coerce_uris
+    def is_an_actor_public_key(self, subject: rdflib.URIRef) -> bool:
         return (None, AS.actor / SEC.publicKey, subject) in self
 
-    def is_author(
-        self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str
-    ) -> bool:
+    @coerce_uris
+    def is_author(self, actor: rdflib.URIRef, subject: rdflib.URIRef) -> bool:
         return (subject, HAS_AUTHOR, actor) in self
 
-    def is_recipient(
-        self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str
-    ) -> bool:
+    @coerce_uris
+    def is_recipient(self, actor: rdflib.URIRef, subject: rdflib.URIRef) -> bool:
         return (subject, HAS_AUDIENCE, actor) in self
 
-    def is_affected(
-        self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str
-    ) -> bool:
+    @coerce_uris
+    def is_affected(self, actor: rdflib.URIRef, subject: rdflib.URIRef) -> bool:
         return (subject, HAS_AFFECTED, actor) in self
 
-    def is_public(self, subject: rdflib.term.Identifier | str) -> bool:
+    @coerce_uris
+    def is_public(self, subject: rdflib.URIRef) -> bool:
         return (subject, HAS_AUDIENCE, PUBLIC_ACTOR) in self
 
-    def is_box_owner(
-        self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str
-    ) -> bool:
+    @coerce_uris
+    def is_box_owner(self, actor: rdflib.URIRef, subject: rdflib.URIRef) -> bool:
         return (actor, HAS_BOX, subject) in self and self.is_a_box(subject)
 
-    def is_mention_of(
-        self, actor: rdflib.term.Identifier | str, subject: rdflib.term.Identifier | str
-    ) -> bool:
+    @coerce_uris
+    def is_mention_of(self, actor: rdflib.URIRef, subject: rdflib.URIRef) -> bool:
         return (subject, RDF.type, AS.Mention) in self and (subject, AS.href, actor) in self
 
-    def is_same_prefix(
-        self, subject_a: rdflib.term.Identifier | str, subject_b: rdflib.term.Identifier | str
-    ) -> bool:
-        return self.get_url_prefix(str(subject_a)) == self.get_url_prefix(str(subject_b))
+    @coerce_uris
+    def is_same_prefix(self, subject_a: rdflib.URIRef, subject_b: rdflib.URIRef) -> bool:
+        return self.get_url_prefix(subject_a) == self.get_url_prefix(subject_b)
 
+    @coerce_uris
     def is_authorized(
         self,
         actor: rdflib.URIRef | str,
-        subject: rdflib.term.Identifier | str,
+        subject: rdflib.URIRef,
         mode: AccessMode = AccessMode.READ,
     ) -> bool:
-        if isinstance(actor, str):
-            actor = rdflib.URIRef(actor)
-        if isinstance(subject, str):
-            subject = rdflib.URIRef(subject)
         action, reason = False, "no authz rule matched"
         if mode == AccessMode.READ:
             if self.is_public(subject):
@@ -165,8 +163,9 @@ class ActivityPubAuthzMixin:
         )
         return action
 
+    @coerce_uris
     def filter_authorized(
-        self, actor: rdflib.URIRef | str | None, root_graph: rdflib.Graph | None = None
+        self, actor: rdflib.URIRef = AS.Public, root_graph: rdflib.Graph | None = None
     ) -> rdflib.Graph:
         if root_graph is None:
             root_graph = self
@@ -176,11 +175,7 @@ class ActivityPubAuthzMixin:
         new_g = self.__class__(None)
 
         for subject in self.subjects():
-            if (
-                actor is None
-                or isinstance(subject, rdflib.term.BNode)
-                or root_graph.is_authorized(actor, subject)
-            ):
+            if isinstance(subject, rdflib.term.BNode) or root_graph.is_authorized(actor, subject):
                 for s, p, o in self.triples((subject, None, None)):
                     if s in VOC or p in VOC or o in VOC:
                         # Never expose any triples involving local information scheme

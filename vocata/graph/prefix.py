@@ -7,22 +7,28 @@ from urllib.parse import urljoin, urlparse
 import rdflib
 import shortuuid
 
+from ..util.types import coerce_uris
 from .schema import AS, RDF, VOC
 
 
 class ActivityPubPrefixMixin:
     @staticmethod
+    @coerce_uris
     def get_url_prefix(uri: str) -> rdflib.URIRef:
         url = urlparse(uri)
         if not url.scheme or not url.netloc:
             raise ValueError(f"{uri} is missing either scheme or netloc")
         return rdflib.URIRef(f"{url.scheme}://{url.netloc}")
 
-    def is_local_prefix(self, prefix: str) -> bool:
+    @coerce_uris
+    def is_local_prefix(self, prefix: rdflib.URIRef) -> bool:
         uri = self.get_url_prefix(prefix)
         return (uri, VOC.isLocal, rdflib.Literal(True)) in self
 
-    def set_local_prefix(self, prefix: str, is_local: bool = True, reset_endpoints: bool = True):
+    @coerce_uris
+    def set_local_prefix(
+        self, prefix: rdflib.URIRef, is_local: bool = True, reset_endpoints: bool = True
+    ):
         uri = self.get_url_prefix(prefix)
         self._logger.info("Declaring %s a %slocal prefix", uri, "" if is_local else "(non-)")
         self.set((uri, VOC.isLocal, rdflib.Literal(is_local)))
@@ -45,15 +51,17 @@ class ActivityPubPrefixMixin:
             else:
                 self.get_prefix_endpoints_node(prefix, create=True)
 
+    @coerce_uris
     def get_prefix_endpoints_node(
-        self, prefix: str, create: bool = False
+        self, prefix: rdflib.URIRef, create: bool = False
     ) -> rdflib.term.BNode | None:
         endpoints_node = self.value(subject=prefix, predicate=AS.endpoints)
         if endpoints_node is None and create:
             endpoints_node = self.reset_prefix_endpoints(prefix)
         return endpoints_node
 
-    def get_prefix_endpoint(self, prefix: str, endpoint: str) -> str:
+    @coerce_uris
+    def get_prefix_endpoint(self, prefix: rdflib.URIRef, endpoint: str) -> str:
         endpoints_node = self.get_prefix_endpoints_node(prefix)
         if endpoints_node is None:
             return None
@@ -61,8 +69,9 @@ class ActivityPubPrefixMixin:
         url = self.value(subject=endpoints_node, predicate=AS[endpoint], default="")
         return str(url) or None
 
+    @coerce_uris
     def reset_prefix_endpoints(
-        self, prefix: str, endpoints: dict[str, str] | None = None
+        self, prefix: rdflib.URIRef, endpoints: dict[str, str] | None = None
     ) -> rdflib.term.BNode:
         if not self.is_local_prefix(prefix):
             raise ValueError(f"{prefix} is not a local prefix")
@@ -81,7 +90,10 @@ class ActivityPubPrefixMixin:
 
         return endpoints_node
 
-    def generate_id(self, subject: str, prefix: str, fallback_ns: str = "Object") -> rdflib.URIRef:
+    @coerce_uris
+    def generate_id(
+        self, subject: rdflib.term.Node, prefix: str, fallback_ns: str = "Object"
+    ) -> rdflib.URIRef:
         type_ = self.value(subject=subject, predicate=RDF.type) or fallback_ns
 
         uri_ns = type_.fragment.lower()
@@ -90,7 +102,10 @@ class ActivityPubPrefixMixin:
         new_id = urljoin(urljoin(prefix, f"/{uri_ns}/"), uri_name)
         return rdflib.URIRef(new_id)
 
-    def reassign_id(self, subject: str, prefix: str, fallback_ns: str = "Object") -> rdflib.URIRef:
+    @coerce_uris
+    def reassign_id(
+        self, subject: rdflib.term.Node, prefix: str, fallback_ns: str = "Object"
+    ) -> rdflib.URIRef:
         new_id = self.generate_id(subject, prefix, fallback_ns)
         self._logger.debug("Replacing subjects with ID %s with %s", subject, new_id)
 

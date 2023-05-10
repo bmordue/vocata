@@ -10,6 +10,7 @@ import rdflib
 from pyld import jsonld
 from rdflib.parser import PythonInputSource
 
+from ..util.types import coerce_uris
 from .schema import AS_URI
 
 if TYPE_CHECKING:
@@ -125,11 +126,12 @@ class JSONLDMixin:
                 doc = None
         return doc
 
-    def activitystreams_cbd(self, uri: str, actor: str | None) -> Self:
+    @coerce_uris
+    def activitystreams_cbd(self, uri: rdflib.URIRef, actor: str | None) -> Self:
         # FIXME this is not precisely a CBD (also fix in README)
         self._logger.debug("Deriving CBD for %s as %s", uri, actor)
         cbd = self.__class__(None)
-        subjects = {rdflib.URIRef(uri)}
+        subjects = {uri}
         seen = set()
         while subjects:
             current_subject = subjects.pop()

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import rdflib
 
+from ..util.types import coerce_uris
 from .authz import AccessMode, HAS_BOX, PUBLIC_ACTOR
 from .schema import ACTIVITY_TOUCHES, ACTIVITY_TYPES, AS, OBJECT_TYPES, RDF, VOC
 
@@ -15,18 +16,19 @@ if TYPE_CHECKING:
 
 
 class ActivityPubActivityMixin:
-    def handle_activity_jsonld(self, doc: dict, target: str, request_actor: str) -> rdflib.URIRef:
+    @coerce_uris
+    def handle_activity_jsonld(
+        self, doc: dict, target: rdflib.URIRef, request_actor: rdflib.URIRef
+    ) -> rdflib.URIRef:
         self._logger.debug("Handling activity to target %s for actor %s", target, request_actor)
-        target = rdflib.URIRef(target)
-        request_actor = rdflib.URIRef(request_actor)
 
         # Add activity to a new subgraph for verification and transformation
         new_g = self.__class__(None)
         new_g.add_jsonld(doc, allow_non_local=True)
-        return self.handle_activity_subgraph(new_g, target, request_actor)
+        return self._handle_activity_subgraph(new_g, target, request_actor)
 
-    def handle_activity_subgraph(
-        self, new_g: "ActivityPubGraph", target: str, request_actor: str
+    def _handle_activity_subgraph(
+        self, new_g: "ActivityPubGraph", target: rdflib.URIRef, request_actor: rdflib.URIRef
     ) -> rdflib.URIRef:
         # Activities received over ActivityPub must contain
         #  exactly one activity or one object (to create it).
@@ -100,6 +102,7 @@ class ActivityPubActivityMixin:
 
         return activity
 
+    @coerce_uris
     async def carry_out_activity(
         self, activity: rdflib.URIRef, box: rdflib.URIRef = PUBLIC_ACTOR, force: bool = False
     ):
@@ -131,7 +134,7 @@ class ActivityPubActivityMixin:
         if object_ is None:
             raise KeyError(f"Activity {activity} does not have an object")
 
-        func_name = f"carry_out_{type_.fragment.lower()}"
+        func_name = f"_carry_out_{type_.fragment.lower()}"
         func = getattr(self, func_name, None)
         if func is None:
             raise NotImplementedError()
@@ -148,7 +151,7 @@ class ActivityPubActivityMixin:
         self.set((activity, VOC.processed, rdflib.Literal(True)))
         self.set((activity, VOC.processedAt, rdflib.Literal(datetime.now())))
 
-    def carry_out_accept(
+    def _carry_out_accept(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -160,13 +163,13 @@ class ActivityPubActivityMixin:
             raise TypeError(f"{object_} has no type")
 
         # We might have a handler for accepting this type of object
-        func_name = f"carry_out_accept_{object_type.fragment.lower()}"
+        func_name = f"_carry_out_accept_{object_type.fragment.lower()}"
         func = getattr(self, func_name, None)
         if func is None:
             return {"no side effects to carry out"}
         return func(activity, actor, object_, recipient)
 
-    def carry_out_accept_follow(
+    def _carry_out_accept_follow(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -210,7 +213,7 @@ class ActivityPubActivityMixin:
 
         return results
 
-    def carry_out_add(
+    def _carry_out_add(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -228,7 +231,7 @@ class ActivityPubActivityMixin:
         self.add_to_collection(target, object_)
         return {f"Added {object_} to {target}"}
 
-    def carry_out_announce(
+    def _carry_out_announce(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -248,7 +251,7 @@ class ActivityPubActivityMixin:
         self.add_to_collection(collection, activity)
         return {f"activity added to shares collection of {object_}"}
 
-    def carry_out_like(
+    def _carry_out_like(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -268,7 +271,7 @@ class ActivityPubActivityMixin:
         self.add_to_collection(collection, activity)
         return {f"activity added to likes collection of {object_}"}
 
-    def carry_out_create(
+    def _carry_out_create(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -279,7 +282,7 @@ class ActivityPubActivityMixin:
         #  and the object has been pulled already
         return {"no side effects to carry out"}
 
-    def carry_out_delete(
+    def _carry_out_delete(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -299,7 +302,7 @@ class ActivityPubActivityMixin:
 
         return {f"replaced {object_} with tombstone"}
 
-    def carry_out_follow(
+    def _carry_out_follow(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -310,7 +313,7 @@ class ActivityPubActivityMixin:
         #  and we don't want to auto-accept for now
         return {"no side effects to carry out"}
 
-    def carry_out_reject(
+    def _carry_out_reject(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -328,7 +331,7 @@ class ActivityPubActivityMixin:
             return {"no side effects to carry out"}
         return func(activity, actor, object_, recipient)
 
-    def carry_out_reject_follow(
+    def _carry_out_reject_follow(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -352,7 +355,7 @@ class ActivityPubActivityMixin:
         self.remove_from_collection(collection, actor)
         return {f"actor removed from following collection of {recipient}"}
 
-    def carry_out_remove(
+    def _carry_out_remove(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -370,7 +373,7 @@ class ActivityPubActivityMixin:
         self.remove_from_collection(target, object_)
         return {f"Removed {object_} from {target}"}
 
-    def carry_out_undo(
+    def _carry_out_undo(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -394,7 +397,7 @@ class ActivityPubActivityMixin:
             return {"no side effects to carry out"}
         return func(activity, actor, object_, recipient)
 
-    def carry_out_undo_accept(
+    def _carry_out_undo_accept(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -406,7 +409,7 @@ class ActivityPubActivityMixin:
         # Reject is inverse of Accept
         return self.carry_out_reject(activity, actor, original_object)
 
-    def carry_out_undo_add(
+    def _carry_out_undo_add(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -418,7 +421,7 @@ class ActivityPubActivityMixin:
         # Remove is inverse of Add
         return self.carry_out_remove(activity, actor, original_object)
 
-    def carry_out_undo_create(
+    def _carry_out_undo_create(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -430,7 +433,7 @@ class ActivityPubActivityMixin:
         # Delete is inverse of Create
         return self.carry_out_delete(activity, actor, original_object)
 
-    def carry_out_undo_like(
+    def _carry_out_undo_like(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,
@@ -454,7 +457,7 @@ class ActivityPubActivityMixin:
         self.remove_from_collection(collection, original_activity)
         return {f"activity removed from likes collection of {original_object}"}
 
-    def carry_out_update(
+    def _carry_out_update(
         self,
         activity: rdflib.URIRef,
         actor: rdflib.URIRef,

@@ -5,10 +5,12 @@
 from importlib.metadata import metadata
 from pprint import pformat
 
+import rdflib
 from requests import Response, Session
 from requests.exceptions import JSONDecodeError
 
 from ..util.http import HTTPSignatureAuth
+from ..util.types import coerce_uris
 from .authz import HAS_ACTOR, HAS_TRANSIENT_AUDIENCE, HAS_TRANSIENT_INBOXES, PUBLIC_ACTOR
 
 CONTENT_TYPE = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
@@ -35,7 +37,10 @@ class ActivityPubFederationMixin:
             }
         return self._http_session
 
-    def _request(self, method: str, target: str, actor: str, data: dict | None = None) -> Response:
+    @coerce_uris
+    def _request(
+        self, method: str, target: str, actor: rdflib.URIRef, data: dict | None = None
+    ) -> Response:
         if method not in ["GET", "POST"]:
             raise ValueError("Only GET and POST are valid HTTP methods for ActivityPub")
 
@@ -62,7 +67,10 @@ class ActivityPubFederationMixin:
 
         return res
 
-    def pull(self, subject: str, actor: str = PUBLIC_ACTOR) -> tuple[bool, Response | None]:
+    @coerce_uris
+    def pull(
+        self, subject: rdflib.URIRef, actor: rdflib.URIRef = PUBLIC_ACTOR
+    ) -> tuple[bool, Response | None]:
         if self.is_local_prefix(subject):
             self._logger.debug("%s is a local prefix, skipping pull", subject)
             return True, None
@@ -86,8 +94,9 @@ class ActivityPubFederationMixin:
 
         return response.status_code < 400, response
 
+    @coerce_uris
     def push_to(
-        self, target: str, subject: str, actor: str, skip_pull: bool = False
+        self, target: str, subject: rdflib.URIRef, actor: rdflib.URIRef, skip_pull: bool = False
     ) -> tuple[bool, Response | None]:
         # FIXME should be asynchronous
         self._logger.info("Pushing %s to remote %s", subject, target)
@@ -114,8 +123,9 @@ class ActivityPubFederationMixin:
 
         return response.status_code < 400, response
 
+    @coerce_uris
     def get_all_targets(
-        self, subject: str, actor: str = PUBLIC_ACTOR, skip_pull: bool = False
+        self, subject: rdflib.URIRef, actor: rdflib.URIRef = PUBLIC_ACTOR, skip_pull: bool = False
     ) -> set[str]:
         # FIXME we need to resolve for an actor!
         self._logger.debug("Resolving inboxes for audience of %s", subject)
@@ -147,7 +157,8 @@ class ActivityPubFederationMixin:
 
         return inbox_set
 
-    def push(self, subject: str) -> tuple[set[Response], set[Response]]:
+    @coerce_uris
+    def push(self, subject: rdflib.URIRef) -> tuple[set[Response], set[Response]]:
         self._logger.info("Pushing %s to its audience", subject)
 
         actor = self.value(subject=subject, predicate=HAS_ACTOR)

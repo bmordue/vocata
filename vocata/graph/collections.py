@@ -4,11 +4,13 @@
 
 import rdflib
 
+from ..util.types import coerce_uris
 from .schema import AS, RDF
 
 
 class ActivityPubCollectionsMixin:
-    def get_collection_items_pred(self, collection: str) -> rdflib.URIRef:
+    @coerce_uris
+    def get_collection_items_pred(self, collection: rdflib.URIRef) -> rdflib.URIRef:
         type_ = self.value(subject=collection, predicate=RDF.type)
         if type_ == AS.Collection:
             items_pred = AS.items
@@ -20,7 +22,8 @@ class ActivityPubCollectionsMixin:
         self._logger.debug("%s is of type %s", collection, type_)
         return items_pred
 
-    def add_to_collection(self, collection: str, item: str):
+    @coerce_uris
+    def add_to_collection(self, collection: rdflib.URIRef, item: rdflib.URIRef):
         self._logger.debug("Adding %s to collection %s", item, collection)
 
         items_pred = self.get_collection_items_pred(collection)
@@ -35,10 +38,11 @@ class ActivityPubCollectionsMixin:
         self._logger.debug("New total items of %s: %d", collection, total_items)
 
         # FIXME support pages
-        self.add((rdflib.URIRef(collection), items_pred, rdflib.URIRef(item)))
-        self.set((rdflib.URIRef(collection), AS.totalItems, rdflib.Literal(total_items)))
+        self.add((collection, items_pred, item))
+        self.set((collection, AS.totalItems, total_items))
 
-    def remove_from_collection(self, collection: str, item: str):
+    @coerce_uris
+    def remove_from_collection(self, collection: rdflib.URIRef, item: rdflib.URIRef):
         self._logger.debug("Removing %s from collection %s", item, collection)
 
         items_pred = self.get_collection_items_pred(collection)
@@ -53,5 +57,5 @@ class ActivityPubCollectionsMixin:
         self._logger.debug("New total items of %s: %d", collection, total_items)
 
         # FIXME support pages
-        self.remove((rdflib.URIRef(collection), items_pred, rdflib.URIRef(item)))
-        self.set((rdflib.URIRef(collection), AS.totalItems, rdflib.Literal(total_items)))
+        self.remove((collection, items_pred, item))
+        self.set((collection, AS.totalItems, total_items))
