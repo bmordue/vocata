@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: © 2023 Dominik George <nik@naturalnet.de>
+# SPDX-FileCopyrightText: © 2023 Steve Bate <svc-codeberg@stevebate.net>
+#
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
 from typing import Any
 
 import pytest

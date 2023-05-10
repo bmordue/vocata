@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: © 2023 Dominik George <nik@naturalnet.de>
+#
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
 from base64 import b64decode, b64encode
 from email.utils import formatdate
 from hashlib import sha256
