@@ -81,10 +81,10 @@ class ActivityPubPrefixMixin:
 
         return endpoints_node
 
-    def generate_id(self, subject: str, prefix: str, fallback_ns: str = "Object") -> rdflib.URIRef:
-        type_ = self.value(subject=subject, predicate=RDF.type) or fallback_ns
+    def generate_id(self, prefix: str, fallback_ns: str = "Object", subject: rdflib.URIRef = None) -> rdflib.URIRef:
+        type_ = (subject and self.value(subject=subject, predicate=RDF.type)) or fallback_ns
 
-        uri_ns = type_.fragment.lower()
+        uri_ns = (type_.fragment if isinstance(type_, rdflib.URIRef) else type_).lower()
         uri_name = shortuuid.uuid()
 
         new_id = urljoin(urljoin(prefix, f"/{uri_ns}/"), uri_name)

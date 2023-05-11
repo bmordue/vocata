@@ -8,7 +8,15 @@ from typing import TYPE_CHECKING
 import rdflib
 
 from .authz import AccessMode, HAS_BOX, PUBLIC_ACTOR
-from .schema import ACTIVITY_TOUCHES, ACTIVITY_TYPES, AS, OBJECT_TYPES, RDF, VOC
+from .schema import (
+    ACTIVITY_TOUCHES,
+    ACTIVITY_TYPES,
+    RECIPIENT_PREDICATES,
+    AS,
+    OBJECT_TYPES,
+    RDF,
+    VOC,
+)
 
 if TYPE_CHECKING:
     from .activitypub import ActivityPubGraph
@@ -55,8 +63,14 @@ class ActivityPubActivityMixin:
         elif root_type in OBJECT_TYPES:
             if self.is_an_outbox(target):
                 # If the root is an object, assume a Create activity
-                # FIXME implement
-                raise NotImplementedError("Implicit Create not implemented")
+                activity = new_cbd.generate_id(target, "Activity")
+                new_cbd.set((activity, RDF.type, AS.Create))
+                new_cbd.set((activity, AS.actor, request_actor))
+                new_cbd.set((activity, AS.object, root))
+                for pred in RECIPIENT_PREDICATES:
+                    for object_ in new_cbd.objects(subject=root, predicate=pred):
+                        new_cbd.set((activity, pred, object_))
+                root = activity
             else:
                 raise TypeError("The root is not an Activity")
         else:
