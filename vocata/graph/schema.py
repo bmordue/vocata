@@ -68,6 +68,5 @@ LINK_TYPES = {
     AS.Mention,
 }
 
-RECIPIENT_PREDICATES = [AS.to, AS.cc, AS.bto, AS.bcc, AS.audience]
 
 __all__ = ["AS", "VOC", "LDP", "RDF", "SEC"]
