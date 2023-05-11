@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: © 2023 Dominik George <nik@naturalnet.de>
+#
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
 from starlette.endpoints import HTTPEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse

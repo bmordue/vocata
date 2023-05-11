@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: © 2023 Dominik George <nik@naturalnet.de>
+#
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
 from pathlib import Path
 from dynaconf import Dynaconf
 from dynaconf.base import LazySettings

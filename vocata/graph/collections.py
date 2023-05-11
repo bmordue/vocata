@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: © 2023 Dominik George <nik@naturalnet.de>
+#
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
 import rdflib
 
 from .schema import AS, RDF
@@ -17,6 +21,10 @@ class ActivityPubCollectionsMixin:
         return items_pred
 
     def add_to_collection(self, collection: str, item: str):
+        # FIXME support pages
+        if (collection, AS.items | AS.orderedItems, item) in self:
+            self._logger.debug("%s already in collection %s", item, collection)
+            return
         self._logger.debug("Adding %s to collection %s", item, collection)
 
         items_pred = self.get_collection_items_pred(collection)
@@ -35,6 +43,10 @@ class ActivityPubCollectionsMixin:
         self.set((rdflib.URIRef(collection), AS.totalItems, rdflib.Literal(total_items)))
 
     def remove_from_collection(self, collection: str, item: str):
+        # FIXME support pages
+        if (collection, AS.items | AS.orderedItems, item) not in self:
+            self._logger.debug("%s not in collection %s", item, collection)
+            return
         self._logger.debug("Removing %s from collection %s", item, collection)
 
         items_pred = self.get_collection_items_pred(collection)
