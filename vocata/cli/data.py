@@ -75,3 +75,14 @@ def shell(ctx: typer.Context):
         ctx.obj["log"].info("graph = ActivityPubGraph(...)")
         user_ns["graph"] = graph
         start_ipython(argv=[], user_ns=user_ns)
+
+
+@app.command()
+def fsck(
+    ctx: typer.Context, fix: bool = typer.Option(False, help="Fix found problems (migrate schema)")
+):
+    with ctx.obj["graph"] as graph:
+        res = graph.fsck(fix=fix)
+
+    if not res:
+        raise typer.Exit(code=2)

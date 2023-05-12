@@ -22,13 +22,19 @@ class ActivityPubPrefixMixin:
         uri = self.get_url_prefix(prefix)
         return (uri, VOC.isLocal, rdflib.Literal(True)) in self
 
-    def set_local_prefix(self, prefix: str, is_local: bool = True, reset_endpoints: bool = True):
+    def set_local_prefix(
+        self,
+        prefix: str,
+        is_local: bool = True,
+        reset_endpoints: bool = True,
+        create_actor: bool = True,
+    ):
         uri = self.get_url_prefix(prefix)
         self._logger.info("Declaring %s a %slocal prefix", uri, "" if is_local else "(non-)")
         self.set((uri, VOC.isLocal, rdflib.Literal(is_local)))
 
         if is_local:
-            if not self.is_an_actor(prefix):
+            if not self.is_an_actor(prefix) and create_actor:
                 domain = urlparse(str(uri)).netloc
                 self.create_actor(
                     uri,
@@ -81,7 +87,9 @@ class ActivityPubPrefixMixin:
 
         return endpoints_node
 
-    def generate_id(self, prefix: str, fallback_ns: str = "Object", subject: rdflib.URIRef = None) -> rdflib.URIRef:
+    def generate_id(
+        self, prefix: str, fallback_ns: str = "Object", subject: rdflib.URIRef = None
+    ) -> rdflib.URIRef:
         type_ = (subject and self.value(subject=subject, predicate=RDF.type)) or fallback_ns
 
         uri_ns = (type_.fragment if isinstance(type_, rdflib.URIRef) else type_).lower()
