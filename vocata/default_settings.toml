@@ -2,6 +2,7 @@
 level = "info"
 
 [graph.database]
+store = "SQLAlchemy"
 uri = "sqlite:///graph.db"
 
 [server]
