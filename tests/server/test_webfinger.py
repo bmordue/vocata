@@ -48,3 +48,17 @@ def test_webfigner_acct(client: TestClient, graph, get_actors):
             "type": AP_CONTENT_TYPE,
             "href": expected_href,
         } in payload["links"]
+
+
+def test_webfigner_no_resource(client: TestClient):
+    """Webfinger without resource should return error"""
+    response = client.get(f"{client.base_url}/.well-known/webfinger")
+    assert response.status_code == 400
+
+
+def test_webfigner_nonexisting(client: TestClient):
+    """Webfinger with non-existing resource should return error"""
+    response = client.get(
+        f"{client.base_url}/.well-known/webfinger?resource=acct:nonexistent@bad.example.com"
+    )
+    assert response.status_code == 404
