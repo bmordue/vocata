@@ -67,6 +67,7 @@ OBJECT_TYPES = {
 LINK_TYPES = {
     AS.Mention,
 }
+COLLECTION_TYPES = {AS.Collection, AS.OrderedCollection}
 
 
 __all__ = ["AS", "VOC", "LDP", "RDF", "SEC"]

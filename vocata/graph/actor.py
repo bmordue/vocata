@@ -116,18 +116,10 @@ class ActivityPubActorMixin:
             if (rdflib.URIRef(uri), None, None) in self and not force:
                 raise ValueError(f"{uri} already exists on graph")
 
-        self._logger.debug("Creating collection %s", inbox_uri)
-        self.set((inbox_uri, RDF.type, AS.OrderedCollection))
-        self.set((inbox_uri, AS.totalItems, rdflib.Literal(0)))
-        self._logger.debug("Creating collection %s", outbox_uri)
-        self.set((outbox_uri, RDF.type, AS.OrderedCollection))
-        self.set((outbox_uri, AS.totalItems, rdflib.Literal(0)))
-        self._logger.debug("Creating collection %s", following_uri)
-        self.set((following_uri, RDF.type, AS.Collection))
-        self.set((following_uri, AS.totalItems, rdflib.Literal(0)))
-        self._logger.debug("Creating collection %s", followers_uri)
-        self.set((followers_uri, RDF.type, AS.Collection))
-        self.set((followers_uri, AS.totalItems, rdflib.Literal(0)))
+        self.create_collection(inbox_uri, ordered=True)
+        self.create_collection(outbox_uri, ordered=True)
+        self.create_collection(following_uri)
+        self.create_collection(followers_uri)
 
         self._logger.debug("Writing attributes and links for actor %s", actor_uri)
         self.set((actor_uri, RDF.type, actor_type))
