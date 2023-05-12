@@ -64,3 +64,22 @@ class GraphFsckMixin:
                     self.add((s, AS.alsoKnownAs, rdflib.URIRef(f"acct:{domain}@{domain}")))
                     problems -= 1
         return problems
+
+    @fsck_check
+    def _fsck_alsoknownas_symmetric(self, fix: bool = False) -> int:
+        """AS.alsoKnownAs must be symmetric"""
+        problems = 0
+        for s, p, o in self.triples((None, AS.alsoKnownAs, None)):
+            if (o, p, s) not in self:
+                if not self.is_local_prefix(o) and not o.startswith("acct:"):
+                    continue
+
+                self._logger.warning(
+                    "%s alsoKnownAs %s is not symmetric",
+                )
+                problems += 1
+                if fix:
+                    self._logger.info("Addins %s alsoKnownAs %s", o, s)
+                    self.add((o, AS.alsoKnownAs, s))
+                    problems -= 1
+        return problems

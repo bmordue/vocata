@@ -37,3 +37,20 @@ def test_fsck_webfingerhref(graph, get_actors):
         assert (actor_iri, VOC.webfingerHref, None) not in graph
         assert (acct, AS.alsoKnownAs, actor_iri) in graph
         assert (actor_iri, AS.alsoKnownAs, acct) in graph
+
+
+def test_fsck_alsoknownas_symmetric(graph, get_actors):
+    with get_actors(1) as (actor_iri,):
+        acct = graph.value(subject=actor_iri, predicate=AS.alsoKnownAs)
+        assert (acct, AS.alsoKnownAs, actor_iri) in graph
+
+        graph.remove((acct, AS.alsoKnownAs, actor_iri))
+        assert (acct, AS.alsoKnownAs, actor_iri) not in graph
+
+        problems = graph._fsck_alsoknownas_symmetric(fix=False)
+        assert problems > 0
+        assert (acct, AS.alsoKnownAs, actor_iri) not in graph
+
+        problems = graph._fsck_alsoknownas_symmetric(fix=True)
+        assert problems == 0
+        assert (acct, AS.alsoKnownAs, actor_iri) in graph

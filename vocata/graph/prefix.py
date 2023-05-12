@@ -19,7 +19,10 @@ class ActivityPubPrefixMixin:
         return rdflib.URIRef(f"{url.scheme}://{url.netloc}")
 
     def is_local_prefix(self, prefix: str) -> bool:
-        uri = self.get_url_prefix(prefix)
+        try:
+            uri = self.get_url_prefix(prefix)
+        except ValueError:
+            return False
         return (uri, VOC.isLocal, rdflib.Literal(True)) in self
 
     def set_local_prefix(

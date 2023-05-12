@@ -91,6 +91,7 @@ class ActivityPubActorMixin:
 
         self._logger.debug("Writing link between %s and %s for Webfinger", acct, actor_uri)
         self.add((actor_uri, AS.alsoKnownAs, rdflib.URIRef(f"acct:{acct}")))
+        self.add((rdflib.URIRef(f"acct:{acct}"), AS.alsoKnownAs, actor_uri))
 
         self._logger.info("Created actor for %s with ID %s", acct, actor_uri)
         return actor_uri
