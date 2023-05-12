@@ -12,19 +12,17 @@ CONTENT_TYPE = 'application/ld+json; profile="https://www.w3.org/ns/activitystre
 
 class WebfingerEndpoint(HTTPEndpoint):
     async def get(self, request: Request) -> JSONResponse:
-        acct = request.query_params.get("resource")
-        if acct is None:
+        resource = request.query_params.get("resource")
+        if resource is None:
             return JSONResponse({"error": "Resource not provided"}, 400)
-        if not acct.startswith("acct:"):
-            return JSONResponse({"error": "Resource is invalid"}, 400)
 
-        uri = request.state.graph.get_actor_uri_by_acct(acct)
+        uri = request.state.graph.get_canonical_uri(resource)
         if uri is None:
             return JSONResponse({"error": "Subject not found"}, 404)
 
         jrd = {
             # FIXME support canonicalization
-            "subject": acct,
+            "subject": resource,
             "links": [
                 {
                     "rel": "self",

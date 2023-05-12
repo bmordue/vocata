@@ -107,5 +107,16 @@ class ActivityPubGraph(
             type_ = self.value(subject=s, predicate=RDF.type)
             yield s, type_
 
+    def get_canonical_uri(self, uri: str) -> str | None:
+        uri = rdflib.URIRef(uri)
+        if (uri, RDF.type, None) in self:
+            return uri
+
+        uri = self.value(predicate=AS.alsoKnownAs, object=uri)
+        if uri is not None:
+            return uri
+
+        return None
+
 
 __all__ = ["ActivityPubGraph"]

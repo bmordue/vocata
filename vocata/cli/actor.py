@@ -25,6 +25,8 @@ def select_account(
     account: str = typer.Argument(..., help="Account name of new actor, in user@domain.tld format"),
 ):
     # FIXME allow specifying account handle or URI
+    if not account.startswith("acct:"):
+        account = f"acct:{account}"
     ctx.obj["current_account"] = account
 
 
@@ -47,7 +49,7 @@ def create(
             ctx.obj["log"].error("The account name %s is invalid", account)
             raise typer.Exit(code=1)
 
-        if graph.get_actor_uri_by_acct(account):
+        if graph.get_canonical_uri(account):
             ctx.obj["log"].error("The account %s already exists", account)
             raise typer.Exit(code=1)
 
@@ -68,7 +70,7 @@ def set_password(
     account = ctx.obj["current_account"]
 
     with ctx.obj["graph"] as graph:
-        actor_uri = graph.get_actor_uri_by_acct(account)
+        actor_uri = graph.get_canonical_uri(account)
         if actor_uri is None:
             ctx.obj["log"].error("The account %s does not exist", account)
             raise typer.Exit(code=1)

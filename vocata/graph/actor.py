@@ -145,14 +145,6 @@ class ActivityPubActorMixin:
         endpoints_node = self.get_prefix_endpoints_node(self.get_url_prefix(actor_uri), create=True)
         self.set((actor_uri, AS.endpoints, endpoints_node))
 
-    def get_actor_uri_by_acct(self, acct: str) -> str | None:
-        if not acct.startswith("acct"):
-            acct = f"acct:{acct}"
-        uri = self.value(predicate=AS.alsoKnownAs, object=rdflib.URIRef(acct))
-        if uri is None:
-            return None
-        return str(uri)
-
     def set_actor_password(self, actor: str, password: str) -> None:
         hash = pbkdf2_sha256.hash(password)
         self.set((rdflib.URIRef(actor), VOC.hashedPassword, rdflib.Literal(hash)))

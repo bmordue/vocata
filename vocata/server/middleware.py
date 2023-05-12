@@ -36,7 +36,7 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
             domain = request.url.netloc
             user = f"{user}@{domain}"
 
-        actor = request.state.graph.get_actor_uri_by_acct(user)
+        actor = request.state.graph.get_canonical_uri(f"acct:{user}")
         if not actor:
             raise KeyError("Account is not linked to an actor")
         request.state.graph._logger.debug("Authenticatin %s", actor)
