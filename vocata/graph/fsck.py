@@ -24,7 +24,11 @@ class GraphFsckMixin:
         for check_fn in _fsck_checks:
             self._logger.info("Check: %s", check_fn.__doc__)
             problems += check_fn(self, fix=fix)
-        return problems > 0
+
+        if problems > 0:
+            self._logger.warning("Graph schema issues detected; run `vocatactl data fsck --fix`!")
+            return True
+        return False
 
     @fsck_check
     def _fsck_webfingerhref(self, fix: bool = False) -> int:
