@@ -1,0 +1,22 @@
+@startuml vocata_context
+!include <C4/C4_Context.puml>
+
+LAYOUT_LEFT_RIGHT()
+
+Person(local_actor_1, "Local Actor")
+Person(remote_actor, "Remote Actor")
+
+System(vocata, "Vocata Instance")
+System(other, "Other Instance")
+
+
+Rel(vocata, local_actor_1, "GET /inbox", "ActivityPub C2S")
+Rel(local_actor_1, vocata, "POST /outbox", "ActivityPub C2S")
+
+Rel(other, remote_actor, "GET /inbox", "ActivityPub C2S")
+Rel(remote_actor, other, "POST /outbox", "ActivityPub C2S")
+
+Rel(vocata, other, "POST /inbox", "ActivityPub S2S")
+Rel(other, vocata, "POST /inbox", "ActivityPub S2S")
+
+@enduml
