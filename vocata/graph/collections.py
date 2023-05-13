@@ -43,9 +43,7 @@ class ActivityPubCollectionsMixin:
 
         # FIXME support pages
         if self.collection_is_ordered(collection):
-            rest = self.value(subject=collection, predicate=AS.items)
-            if rest is None:
-                rest = RDF.nil
+            rest = self.value(subject=collection, predicate=AS.items, default=RDF.nil)
             items_node = rdflib.BNode()
             self.set((collection, AS.items, items_node))
             self.set((items_node, RDF.first, item))
