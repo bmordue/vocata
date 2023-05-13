@@ -34,7 +34,7 @@ a local prefix:
 
 ```sh
 # Declare vocata.example.com a local prefix
-vocatactl prefix https://vocata.example.com set-local
+vocatactl prefix set-local https://vocata.example.com
 ```
 
 From this point on, Vocata feels responsible for the prefix, and
@@ -43,7 +43,7 @@ you can start using it.
 ```sh
 # Create actor test under the vocata.example.com domain,
 # with display name "Test User"
-vocatactl actor create test@vocata.example.com "Test User"
+vocatactl actor create --name "Test User" test@vocata.example.com
 ```
 
 [ActivityPub]: https://activitypub.rocks/

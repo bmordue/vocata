@@ -205,7 +205,7 @@ a local prefix:
 
 ```shell
 # Declare example.com a local prefix
-vocatactl prefix https://example.com set-local
+vocatactl prefix set-local https://example.com
 ```
 
 From this point on, Vocata feels responsible for the prefix, and
@@ -214,7 +214,7 @@ you can start using it by creating a local actor:
 ```shell
 # Create actor test under the example.com domain,
 # with display name "Test User"
-vocatactl actor create test@example.com "Test User"
+vocatactl actor create --name "Test User" test@example.com
 ```
 
 ## The Vocata logo
