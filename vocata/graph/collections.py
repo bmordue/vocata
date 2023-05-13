@@ -21,8 +21,7 @@ class ActivityPubCollectionsMixin:
         self.add((collection, RDF.type, AS.OrderedCollection if ordered else AS.Collection))
         self.add((collection, AS.totalItems, rdflib.Literal(0)))
         if ordered:
-            items_node = rdflib.BNode()
-            self.add((collection, AS.items, items_node))
+            self.add((collection, AS.items, RDF.nil))
 
     def add_to_collection(self, collection: str, item: str):
         if self.value(subject=collection, predicate=RDF.type) not in COLLECTION_TYPES:
@@ -45,11 +44,12 @@ class ActivityPubCollectionsMixin:
         # FIXME support pages
         if self.collection_is_ordered(collection):
             rest = self.value(subject=collection, predicate=AS.items)
+            if rest is None:
+                rest = RDF.nil
             items_node = rdflib.BNode()
-            self.set((rdflib.URIRef(collection), AS.items, items_node))
-            self.add((items_node, RDF.first, rdflib.URIRef(item)))
-            if rest is not None:
-                self.add((items_node, RDF.rest, rest))
+            self.set((collection, AS.items, items_node))
+            self.set((items_node, RDF.first, item))
+            self.set((items_node, RDF.rest, rest))
         else:
             self.add((rdflib.URIRef(collection), AS.items, rdflib.URIRef(item)))
         self.set((rdflib.URIRef(collection), AS.totalItems, rdflib.Literal(total_items)))
