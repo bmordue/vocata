@@ -19,20 +19,17 @@ class ActorType(StrEnum):
 app = typer.Typer(help="Manage ActivityPub actors")
 
 
-@app.callback()
-def select_account(
-    ctx: typer.Context,
-    account: str = typer.Argument(..., help="Account name of new actor, in user@domain.tld format"),
-):
+def render_account(account: str) -> str:
     # FIXME allow specifying account handle or URI
     if not account.startswith("acct:"):
         account = f"acct:{account}"
-    ctx.obj["current_account"] = account
+    return account
 
 
 @app.command()
 def create(
     ctx: typer.Context,
+    account: str = typer.Argument(..., help="Account name of new actor, in user@domain.tld format"),
     name: Optional[str] = typer.Option(None, help="Display name of new actor"),
     actor_type: ActorType = typer.Option(ActorType.person, help="Actor type of new actor"),
     force: bool = typer.Option(
@@ -41,7 +38,7 @@ def create(
 ):
     """Create a new local actor"""
     # FIXME support auto-assigned ID
-    account = ctx.obj["current_account"]
+    account = render_account(account)
 
     with ctx.obj["graph"] as graph:
         # FIXME allow specifying account handle or URI
@@ -62,12 +59,13 @@ def create(
 @app.command()
 def set_password(
     ctx: typer.Context,
+    account: str = typer.Argument(..., help="Account name of actor, in user@domain.tld format"),
     password: str = typer.Option(
         ..., help="Login password for C2S", prompt=True, confirmation_prompt=True, hide_input=True
     ),
 ):
     """Set C2S login password for an actor"""
-    account = ctx.obj["current_account"]
+    account = render_account(account)
 
     with ctx.obj["graph"] as graph:
         actor_uri = graph.get_canonical_uri(account)
