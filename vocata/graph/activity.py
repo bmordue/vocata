@@ -58,7 +58,7 @@ class ActivityPubActivityMixin:
         root_type = new_cbd.value(subject=root, predicate=RDF.type)
         self._logger.debug("Incoming object is of type %s", root_type)
         if root_type in ACTIVITY_TYPES:
-            self._logger.debug("%s is an actitiy type", root)
+            self._logger.debug("%s is an activity type", root)
             activity = root
         elif root_type in OBJECT_TYPES:
             if self.is_an_outbox(target):
@@ -68,8 +68,9 @@ class ActivityPubActivityMixin:
                 new_cbd.set((activity, AS.actor, request_actor))
                 new_cbd.set((activity, AS.object, root))
                 # FIXME move to a utility method for audience copying?
-                for s, p, o in self.triple((root, HAS_AUDIENCE, None)):
-                    new_cbd.set((activity, p, o))
+                for pred in HAS_AUDIENCE.args:
+                    for object_ in new_cbd.objects(subject=root, predicate=pred):
+                        new_cbd.set((activity, pred, object_))
                 root = activity
             else:
                 raise TypeError("The root is not an Activity")

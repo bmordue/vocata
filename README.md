@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-3.0-or-later OR CC-BY-SA-4.0+
 
 # Vocata – Vocabulary-Agnostic Transport Agent
 
-![Vocata logo](docs/static/vocata.svg)
+![Vocata logo](docs/_static/vocata.svg)
 
 ## About Vocata and the Fediverse
 

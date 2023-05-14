@@ -6,6 +6,7 @@ Source: https://codeberg.org/Vocata/vocata
 Files:
  docs/.domains
  docs/.rsyncignore
+ docs/conf.py
  **/*.toml
  **/.git*
  .vscode/

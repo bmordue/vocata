@@ -12,25 +12,23 @@ pipeline:
       - poetry run pytest
   build-docs:
     group: build
-    image: alpine
+    image: debian:bookworm
     commands:
-      - apk add zola git
-      - git submodule update --init --recursive
-      - cd docs/; zola build; cd ..
+      - apt-get -y update && apt-get -y install python3-poetry
+      - poetry install --with docs
+      - poetry run sphinx-build -b html docs docs/_build/html
   deploy-docs-pages:
     group: deploy
     when:
       branch: main
-    image: alpine
+    image: debian:bookworm
     secrets: [ACCESS_TOKEN]
     commands:
-      - apk add git rsync
-      # configure git
+      - apt-get -y update && apt-get -y install git rsync
       - git config --global user.email "mail@ci.codeberg.org"
       - git config --global user.name "Codeberg CI"
-      # deploy changes
       - git clone https://"$${ACCESS_TOKEN}"@codeberg.org/Vocata/pages-docs.git /pages
-      - rsync -r --delete --exclude-from="docs/.rsyncignore" docs/public/ docs/.domains docs/README.md docs/LICENSE /pages
+      - rsync -r --delete --exclude-from="docs/.rsyncignore" docs/_build/html/ docs/.domains docs/README.md docs/LICENSE /pages
       - cd /pages
       - git add -A
       - git commit -m "Generate website - based on commit ${CI_COMMIT_SHA}"

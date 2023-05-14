@@ -1,0 +1,33 @@
+' SPDX-FileCopyrightText: © 2023 Dominik George <nik@naturalnet.de
+' SPDX-License-Identifier: LGPL-3.0-or-later OR CC-BY-SA-4.0+
+
+@startuml vocata_context
+!include <C4/C4_Component.puml>
+
+LAYOUT_LEFT_RIGHT()
+
+Person(local_actor_1, "Local Actor")
+Person(admin, "Instance Admin")
+
+Container_Boundary(vocata, "Vocata Server") {
+    Component(asgi, "ASGI App", "Starlette")
+    Component(graph, "RDF Graph", "rdflib")
+}
+Container_Boundary(cli, "vocatactl Utility") {
+    Component(typer, "CLI", "Typer")
+    Component(graph_cli, "RDF Graph", "rdflib")
+}
+ContainerDb(store, "RDF Store", "e.g. PostgreSQL")
+
+Rel(asgi, local_actor_1, "GET /inbox", "ActivityPub C2S")
+Rel(local_actor_1, asgi, "POST /outbox", "ActivityPub C2S")
+
+Rel(admin, typer, "calls CLI commands")
+
+BiRel(asgi, graph, "calls statement handling methods")
+BiRel(typer, graph_cli, "calls statement handling methods")
+
+BiRel(graph, store, "persists data")
+BiRel(graph_cli, store, "persists data")
+
+@enduml

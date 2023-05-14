@@ -1,0 +1,27 @@
+' SPDX-FileCopyrightText: © 2023 Dominik George <nik@naturalnet.de
+' SPDX-License-Identifier: LGPL-3.0-or-later OR CC-BY-SA-4.0+
+
+@startuml vocata_context
+!include <C4/C4_Container.puml>
+
+LAYOUT_LEFT_RIGHT()
+
+Person(local_actor_1, "Local Actor")
+
+System_Boundary(vocata, "Vocata Instance") {
+    Container(proxy, "HTTPS Reverse Proxy", "e.g. NGINX")
+    Container(server, "Vocata Server")
+    ContainerDb(store, "RDF Store", "e.g. PostgreSQL")
+}
+System(other, "Other Instance")
+
+Rel(proxy, local_actor_1, "GET /inbox", "ActivityPub C2S")
+Rel(local_actor_1, proxy, "POST /outbox", "ActivityPub C2S")
+
+BiRel(proxy, server, "forwards requests")
+BiRel(server, store, "persists data")
+
+Rel(server, other, "POST /inbox", "ActivityPub S2S")
+Rel(other, proxy, "POST /inbox", "ActivityPub S2S")
+
+@enduml
