@@ -6,15 +6,19 @@ import typer
 
 app = typer.Typer(help="Manage local prefixes (domains)")
 
-def render_prefix(prefix: str) -> str:
+
+@app.callback()
+def select_prefix(
+    ctx: typer.Context,
+    prefix: str = typer.Argument(..., help="URI prefix to manage, e.g. https://example.com"),
+):
     # FIXME allow specifying URL or just domain
-    return prefix
+    ctx.obj["current_prefix"] = prefix
 
 
 @app.command()
 def set_local(
     ctx: typer.Context,
-    prefix: str = typer.Argument(..., help="URI prefix to manage, e.g. https://example.com"),
     is_local: bool = typer.Option(True, help="Is prefix local or not"),
     reset_endpoints: bool = typer.Option(True, help="Reset endpoint URLs for prefix to defaults"),
     yes: bool = typer.Option(
@@ -28,17 +32,14 @@ def set_local(
     if not yes:
         raise typer.Exit(code=1)
 
-    prefix = render_prefix(prefix)
-    
     with ctx.obj["graph"] as graph:
-        graph.set_local_prefix(prefix, is_local, reset_endpoints)
+        graph.set_local_prefix(ctx.obj["current_prefix"], is_local, reset_endpoints)
 
 
 # FIXME rethink with a clear OIDC concept
 @app.command()
 def set_oauth_issuer(
     ctx: typer.Context,
-    prefix: str = typer.Argument(..., help="URI prefix to manage, e.g. https://example.com"),
     issuer: str = typer.Argument(..., help="Issuer URL of OAuth/OIDC issuer"),
     yes: bool = typer.Option(
         ...,
@@ -51,10 +52,8 @@ def set_oauth_issuer(
     if not yes:
         raise typer.Exit(code=1)
 
-    prefix = render_prefix(prefix)
-    
     with ctx.obj["graph"] as graph:
-        if not graph.is_local_prefix(prefix):
-            raise typer.BadParameter(f"{prefix} is not a local prefix")
+        if not graph.is_local_prefix(ctx.obj["current_prefix"]):
+            raise typer.BadParameter(f"{ctx.obj['current_prefix']} is not a local prefix")
 
-        graph.set_prefix_oauth_issuer(prefix, issuer)
+        graph.set_prefix_oauth_issuer(ctx.obj["current_prefix"], issuer)
