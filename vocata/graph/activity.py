@@ -137,6 +137,8 @@ class ActivityPubActivityMixin:
         # Pull all objects related to the activity
         touches = self.objects(activity, ACTIVITY_TOUCHES, unique=True)
         for touch in touches:
+            if not isinstance(touch, rdflib.URIRef):
+                continue
             self._logger.debug("Activity touches %s, pulling", touch)
             self.pull(touch, recipient)
 
@@ -290,9 +292,14 @@ class ActivityPubActivityMixin:
         object_: rdflib.URIRef,
         recipient: rdflib.URIRef = PUBLIC_ACTOR,
     ) -> set[str]:
-        # The activity has been added to the inbox already
-        #  and the object has been pulled already
-        return {"no side effects to carry out"}
+        results = set()
+
+        if isinstance(object_, rdflib.BNode) and self.is_local_prefix(activity):
+            # Assign an ID for a locally created object
+            self.reassign_id(object_, self.get_url_prefix(activity))
+            results.add("reassigned object ID")
+
+        return results or {"no side effects to carry out"}
 
     def carry_out_delete(
         self,

@@ -91,7 +91,7 @@ class ActivityPubPrefixMixin:
         return endpoints_node
 
     def generate_id(
-        self, prefix: str, fallback_ns: str = "Object", subject: rdflib.URIRef = None
+        self, prefix: str, fallback_ns: str = "Object", subject: rdflib.term.Node = None
     ) -> rdflib.URIRef:
         type_ = (subject and self.value(subject=subject, predicate=RDF.type)) or fallback_ns
 
@@ -101,7 +101,9 @@ class ActivityPubPrefixMixin:
         new_id = urljoin(urljoin(prefix, f"/{uri_ns}/"), uri_name)
         return rdflib.URIRef(new_id)
 
-    def reassign_id(self, subject: str, prefix: str, fallback_ns: str = "Object") -> rdflib.URIRef:
+    def reassign_id(
+        self, subject: rdflib.term.Node, prefix: str, fallback_ns: str = "Object"
+    ) -> rdflib.URIRef:
         new_id = self.generate_id(prefix, fallback_ns, subject)
         self._logger.debug("Replacing subjects with ID %s with %s", subject, new_id)
 
