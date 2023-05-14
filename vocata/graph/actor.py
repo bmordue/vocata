@@ -80,6 +80,8 @@ class ActivityPubActorMixin:
         # FIXME support auto-assigned ID, probably using alsoKnownAs
         self._logger.debug("Creating actor from account name %s", acct)
 
+        acct = acct.removeprefix("acct:")
+
         if not self.is_valid_acct(acct):
             raise ValueError(f"Account name {acct} is invalid.")
 
