@@ -32,7 +32,7 @@ def jsonld_single(doc: dict, id_: str, key_: str = "id") -> dict:
 
     found = False
     for obj in doc["@graph"]:
-        if obj[key_] == id_:
+        if obj[key_] == str(id_):
             new_doc.update(obj)
             found = True
             break
