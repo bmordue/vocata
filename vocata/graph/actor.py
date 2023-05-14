@@ -25,7 +25,7 @@ LOCAL_ACTOR_URI_FORMAT = "https://{domain}/users/{local}"
 class ActivityPubActorMixin:
     @staticmethod
     def is_valid_acct(acct: str) -> bool:
-        if re.match(ACCT_RE, acct) is None:
+        if re.match(ACCT_RE, acct.removeprefix("acct:")) is None:
             return False
         else:
             return True
