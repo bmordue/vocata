@@ -100,7 +100,6 @@ class ProxyEndpoint(ActivityPubEndpoint):
             real_id = form["id"]
 
         # FIXME add security measures to not randomly pull stuff
-        # FIXME use caching
         request.state.graph.pull(real_id, request.state.actor)
 
         # Once authorized, we can simply fake being authoritative for the subject ;)

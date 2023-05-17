@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
 import json
+from datetime import datetime
 from typing import Self, TYPE_CHECKING
 
 import pyld
@@ -10,7 +11,7 @@ import rdflib
 from pyld import jsonld
 from rdflib.parser import PythonInputSource
 
-from .schema import AS, AS_URI, RDF
+from .schema import AS, AS_URI, RDF, VOC
 
 if TYPE_CHECKING:
     from .activitypub import ActivityPubGraph
@@ -189,6 +190,9 @@ class JSONLDMixin:
             # Remvoe all statements about subject and add new
             self._logger.info("Replacing %s from JSON-LD document", s)
             self.remove((s, None, None))
+
+            # Record time this was added
+            self.set((s, VOC.receivedAt, rdflib.Literal(datetime.now())))
 
         self += new_g
         return new_g

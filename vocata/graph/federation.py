@@ -2,14 +2,18 @@
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
+from datetime import timezone
+from email.utils import format_datetime
 from importlib.metadata import metadata
 from pprint import pformat
 
+import rdflib
 from requests import Response, Session
 from requests.exceptions import JSONDecodeError
 
 from ..util.http import HTTPSignatureAuth
 from .authz import HAS_ACTOR, HAS_TRANSIENT_AUDIENCE, HAS_TRANSIENT_INBOXES, PUBLIC_ACTOR
+from .schema import VOC
 
 CONTENT_TYPE = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
 
@@ -35,13 +39,20 @@ class ActivityPubFederationMixin:
             }
         return self._http_session
 
-    def _request(self, method: str, target: str, actor: str, data: dict | None = None) -> Response:
+    def _request(
+        self,
+        method: str,
+        target: str,
+        actor: str,
+        data: dict | None = None,
+        headers: dict | None = None,
+    ) -> Response:
         if method not in ["GET", "POST"]:
             raise ValueError("Only GET and POST are valid HTTP methods for ActivityPub")
 
         self._logger.debug("Preparing new %s request to %s as %s", method, target, actor)
 
-        headers = {}
+        headers = headers or {}
         auth = None
         sign_headers = ["(request-target)", "host", "date"]
         if method == "POST":
@@ -71,16 +82,28 @@ class ActivityPubFederationMixin:
             self._logger.debug("Not pulling public actor")
             return True, None
 
-        # FIXME add some kind of debouncing mechanism
-        #  and/or properly use HTTP caching
+        # Use caching headers if values are known
+        headers = {}
+        if etag := self.value(subject=rdflib.URIRef(subject), predicate=VOC.httpETag):
+            headers["If-None-Match"] = etag.value
+        if last_modified := self.value(subject=rdflib.URIRef(subject), predicate=VOC.receivedAt):
+            headers["If-Modified-Since"] = format_datetime(
+                last_modified.value.astimezone(timezone.utc), usegmt=True
+            )
 
         self._logger.info("Pulling %s from remote", subject)
         # FIXME validate URL
-        response = self._request("GET", subject, actor)
+        response = self._request("GET", subject, actor, headers=headers)
 
         if response.status_code == 200:
             self._logger.debug("Successfully pulled %s", subject)
             self.add_jsonld(response.json(), allow_non_local=True)
+
+            if etag := response.headers.get("ETag"):
+                self._logger.debug("Setting ETag for %s to %s", subject, etag)
+                self.set((rdflib.URIRef(subject), VOC.httpETag, rdflib.Literal(etag)))
+        elif response.status_code == 304:
+            self._logger.debug("Skipping processing of %s (not modified)", subject)
         else:
             self._logger.error("Error pulling %s", subject)
 
