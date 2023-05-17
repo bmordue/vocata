@@ -112,3 +112,40 @@ class GraphFsckMixin:
         )
 
         return problems
+
+    @fsck_check
+    def _fsck_totalitems(self, fix: bool = False) -> int:
+        """AS.totalItems must provide actual item count"""
+        problems = 0
+        for collection in self.subjects(predicate=AS.totalItems):
+            type_ = self.value(subject=collection, predicate=RDF.type)
+            if type_ == AS.OrderedCollection:
+                actual_count = len(
+                    list(
+                        filter(
+                            lambda t: t[2] != RDF.nil,
+                            self.triples(
+                                (collection, AS.items / (RDF.rest * "*") / RDF.first, None)
+                            ),
+                        )
+                    )
+                )
+            else:
+                actual_count = len(list(self.triples((collection, AS.items, None))))
+            current_count = self.value(subject=collection, predicate=AS.totalItems).value
+
+            if actual_count != current_count:
+                self._logger.warning(
+                    "Actual count %d of %s does not match current totalItems %d",
+                    actual_count,
+                    collection,
+                    current_count,
+                )
+                problems += 1
+
+                if fix:
+                    self._logger.info("Setting AS.totalItems of %s to %d", collection, actual_count)
+                    self.set((collection, AS.totalItems, rdflib.Literal(actual_count)))
+                    problems -= 1
+
+        return problems

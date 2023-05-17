@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
+from rdflib import Literal
+
 from vocata.graph.schema import AS, RDF, VOC
 
 
@@ -68,3 +70,37 @@ def test_fsck_ordereditems_predicate(graph, get_actors, get_notes):
         problems = graph._fsck_ordereditems_predicate(fix=True)
         assert problems == 0
         assert (outbox, AS.items / RDF.first, None) in graph
+
+
+def test_fsck_totalitems_orderedcollection(graph, get_actors, get_notes):
+    with get_actors(1) as (actor_iri,), get_notes() as notes:
+        outbox = graph.value(subject=actor_iri, predicate=AS.outbox)
+        for note_iri in notes:
+            graph.add_to_collection(outbox, note_iri)
+        assert graph.value(subject=outbox, predicate=AS.totalItems).value == 3
+
+        graph.set((outbox, AS.totalItems, Literal(5)))
+
+        problems = graph._fsck_totalitems(fix=False)
+        assert problems == 1
+
+        problems = graph._fsck_totalitems(fix=True)
+        assert problems == 0
+        assert graph.value(subject=outbox, predicate=AS.totalItems).value == 3
+
+
+def test_fsck_totalitems_collection(graph, get_actors, get_notes):
+    with get_actors(1) as (actor_iri,), get_notes() as notes:
+        followers = graph.value(subject=actor_iri, predicate=AS.followers)
+        for note_iri in notes:
+            graph.add_to_collection(followers, note_iri)
+        assert graph.value(subject=followers, predicate=AS.totalItems).value == 3
+
+        graph.set((followers, AS.totalItems, Literal(5)))
+
+        problems = graph._fsck_totalitems(fix=False)
+        assert problems == 1
+
+        problems = graph._fsck_totalitems(fix=True)
+        assert problems == 0
+        assert graph.value(subject=followers, predicate=AS.totalItems).value == 3
