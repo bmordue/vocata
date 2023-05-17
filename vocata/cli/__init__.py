@@ -54,5 +54,7 @@ def configure_app(
     ctx.obj["log"] = logging.getLogger("vocata-cli")
 
     ctx.obj["graph"] = ActivityPubGraph(
-        logger=ctx.obj["log"], database=ctx.obj["settings"].graph.database.uri
+        logger=ctx.obj["log"],
+        database=ctx.obj["settings"].graph.database.uri,
+        store=ctx.obj["settings"].graph.database.store,
     )
