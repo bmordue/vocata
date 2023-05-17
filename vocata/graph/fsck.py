@@ -92,6 +92,9 @@ class GraphFsckMixin:
         problems = 0
         subjects = set()
         for s, p, o in self.triples((None, AS.orderedItems, None)):
+            if not self.is_local_prefix(s):
+                continue
+
             if s not in subjects:
                 self._logger.warning("%s has an AS.orderedItems predicate on the graph", s)
                 subjects.add(s)
@@ -118,6 +121,9 @@ class GraphFsckMixin:
         """AS.totalItems must provide actual item count"""
         problems = 0
         for collection in self.subjects(predicate=AS.totalItems):
+            if not self.is_local_prefix(collection):
+                continue
+
             type_ = self.value(subject=collection, predicate=RDF.type)
             if type_ == AS.OrderedCollection:
                 actual_count = len(
