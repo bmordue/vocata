@@ -108,7 +108,7 @@ class GraphFsckMixin:
                 self.set((collection, AS.totalItems, rdflib.Literal(0)))
                 self._logger.info("Adding %d items of %s again", len(items), collection)
                 for item in items:
-                    self.add_to_collection(collection, item)
+                    self.add_to_collection(collection, item, deduplicate=False)
                 problems -= 1
         self._logger.warning(
             "Collection schema has been fixed, but items order might be unexpected"

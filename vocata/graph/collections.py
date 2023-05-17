@@ -23,11 +23,14 @@ class ActivityPubCollectionsMixin:
         if ordered:
             self.add((collection, AS.items, RDF.nil))
 
-    def add_to_collection(self, collection: str, item: str):
+    def add_to_collection(self, collection: str, item: str, deduplicate: bool = True):
         if self.value(subject=collection, predicate=RDF.type) not in COLLECTION_TYPES:
             raise TypeError(f"{collection} is not a collection")
         # FIXME support pages
-        if (collection, AS.items / (((RDF.rest * "*") / RDF.first) * "*"), item) in self:
+        if (
+            deduplicate
+            and (collection, AS.items / (((RDF.rest * "*") / RDF.first) * "*"), item) in self
+        ):
             self._logger.debug("%s already in collection %s", item, collection)
             return
         self._logger.debug("Adding %s to collection %s", item, collection)
