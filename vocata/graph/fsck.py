@@ -85,3 +85,30 @@ class GraphFsckMixin:
                     self.add((o, AS.alsoKnownAs, s))
                     problems -= 1
         return problems
+
+    @fsck_check
+    def _fsck_ordereditems_predicate(self, fix: bool = False) -> int:
+        """AS.orderedItems should not exist"""
+        problems = 0
+        subjects = set()
+        for s, p, o in self.triples((None, AS.orderedItems, None)):
+            if s not in subjects:
+                self._logger.warning("%s has an AS.orderedItems predicate on the graph", s)
+                subjects.add(s)
+                problems += 1
+
+        if fix and subjects:
+            for collection in subjects:
+                items = list(self.objects(subject=collection, predicate=AS.orderedItems))
+                self._logger.info("Removing %s AS.orderedItems", collection)
+                self.remove((collection, AS.orderedItems, None))
+                self.set((collection, AS.totalItems, rdflib.Literal(0)))
+                self._logger.info("Adding %d items of %s again", len(items), collection)
+                for item in items:
+                    self.add_to_collection(collection, item)
+                problems -= 1
+        self._logger.warning(
+            "Collection schema has been fixed, but items order might be unexpected"
+        )
+
+        return problems

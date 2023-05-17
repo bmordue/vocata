@@ -54,3 +54,17 @@ def test_fsck_alsoknownas_symmetric(graph, get_actors):
         problems = graph._fsck_alsoknownas_symmetric(fix=True)
         assert problems == 0
         assert (acct, AS.alsoKnownAs, actor_iri) in graph
+
+
+def test_fsck_ordereditems_predicate(graph, get_actors, get_notes):
+    with get_actors(1) as (actor_iri,), get_notes() as notes:
+        outbox = graph.value(subject=actor_iri, predicate=AS.outbox)
+        for note_iri in notes:
+            graph.add((outbox, AS.orderedItems, note_iri))
+
+        problems = graph._fsck_ordereditems_predicate(fix=False)
+        assert problems == 1
+
+        problems = graph._fsck_ordereditems_predicate(fix=True)
+        assert problems == 0
+        assert (outbox, AS.items / RDF.first, None) in graph
