@@ -81,7 +81,7 @@ class GraphFsckMixin:
                 self._logger.warning("%s alsoKnownAs %s is not symmetric", o, s)
                 problems += 1
                 if fix:
-                    self._logger.info("Addins %s alsoKnownAs %s", o, s)
+                    self._logger.info("Adding %s alsoKnownAs %s", o, s)
                     self.add((o, AS.alsoKnownAs, s))
                     problems -= 1
         return problems
