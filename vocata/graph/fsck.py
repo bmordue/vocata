@@ -110,9 +110,9 @@ class GraphFsckMixin:
                 for item in items:
                     self.add_to_collection(collection, item, deduplicate=False)
                 problems -= 1
-        self._logger.warning(
-            "Collection schema has been fixed, but items order might be unexpected"
-        )
+            self._logger.warning(
+                "Collection schema has been fixed, but items order might be unexpected"
+            )
 
         return problems
 
