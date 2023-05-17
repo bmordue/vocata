@@ -8,11 +8,11 @@ import rdflib
 
 from .schema import AS, RDF, VOC
 
-_fsck_checks: set[Callable[[bool], int]] = set()
+_fsck_checks: list[Callable[[bool], int]] = []
 
 
 def fsck_check(check_fn: Callable[[bool], int]) -> Callable[[bool], int]:
-    _fsck_checks.add(check_fn)
+    _fsck_checks.append(check_fn)
     return check_fn
 
 
