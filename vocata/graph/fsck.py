@@ -78,9 +78,7 @@ class GraphFsckMixin:
                 if not self.is_local_prefix(o) and not o.startswith("acct:"):
                     continue
 
-                self._logger.warning(
-                    "%s alsoKnownAs %s is not symmetric",
-                )
+                self._logger.warning("%s alsoKnownAs %s is not symmetric", o, s)
                 problems += 1
                 if fix:
                     self._logger.info("Addins %s alsoKnownAs %s", o, s)
