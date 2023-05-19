@@ -105,10 +105,13 @@ class ActivityPubAuthzMixin:
             elif self.is_an_actor(subject):
                 # Actor objects can generally be read
                 action, reason = True, "is an actor"
-            elif self.is_a_box(subject):
-                # Inboxes, outboxes, and follower, following are readable
+            elif self.is_an_outbox(subject):
+                # Outboxes are readable
                 # FIXME reconsider
-                action, reason = True, "is a box collection"
+                action, reason = True, "is an outbox collection"
+            elif self.is_box_owner(actor, subject):
+                # Actors may read their own boxes
+                action, reason = True, "is owner of box"
             elif self.is_an_actor_public_key(subject):
                 # Public keys of actors can be read
                 action, reason = True, "is an actor public key"

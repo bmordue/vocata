@@ -16,6 +16,7 @@ def get_settings(settings_files: str | list[str] = None, **overrides) -> LazySet
         settings_files = [settings_files]
 
     settings = Dynaconf(
+        load_dotenv=True,
         envvar_prefix="VOC",
         core_loaders=["TOML"],
         preload=[_DEFAULTS_FILE],

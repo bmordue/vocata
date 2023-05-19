@@ -25,7 +25,7 @@ LOCAL_ACTOR_URI_FORMAT = "https://{domain}/users/{local}"
 class ActivityPubActorMixin:
     @staticmethod
     def is_valid_acct(acct: str) -> bool:
-        if re.match(ACCT_RE, acct) is None:
+        if re.match(ACCT_RE, acct.removeprefix("acct:")) is None:
             return False
         else:
             return True
@@ -79,6 +79,8 @@ class ActivityPubActorMixin:
     def create_actor_from_acct(self, acct: str, name: str, type_: str, force: bool) -> str:
         # FIXME support auto-assigned ID, probably using alsoKnownAs
         self._logger.debug("Creating actor from account name %s", acct)
+
+        acct = acct.removeprefix("acct:")
 
         if not self.is_valid_acct(acct):
             raise ValueError(f"Account name {acct} is invalid.")

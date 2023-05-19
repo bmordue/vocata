@@ -8,11 +8,11 @@ import rdflib
 
 from .schema import AS, RDF, VOC
 
-_fsck_checks: set[Callable[[bool], int]] = set()
+_fsck_checks: list[Callable[[bool], int]] = []
 
 
 def fsck_check(check_fn: Callable[[bool], int]) -> Callable[[bool], int]:
-    _fsck_checks.add(check_fn)
+    _fsck_checks.append(check_fn)
     return check_fn
 
 
@@ -78,12 +78,80 @@ class GraphFsckMixin:
                 if not self.is_local_prefix(o) and not o.startswith("acct:"):
                     continue
 
-                self._logger.warning(
-                    "%s alsoKnownAs %s is not symmetric",
-                )
+                self._logger.warning("%s alsoKnownAs %s is not symmetric", o, s)
                 problems += 1
                 if fix:
-                    self._logger.info("Addins %s alsoKnownAs %s", o, s)
+                    self._logger.info("Adding %s alsoKnownAs %s", o, s)
                     self.add((o, AS.alsoKnownAs, s))
                     problems -= 1
+        return problems
+
+    @fsck_check
+    def _fsck_ordereditems_predicate(self, fix: bool = False) -> int:
+        """AS.orderedItems should not exist"""
+        problems = 0
+        subjects = set()
+        for s, p, o in self.triples((None, AS.orderedItems, None)):
+            if not self.is_local_prefix(s):
+                continue
+
+            if s not in subjects:
+                self._logger.warning("%s has an AS.orderedItems predicate on the graph", s)
+                subjects.add(s)
+                problems += 1
+
+        if fix and subjects:
+            for collection in subjects:
+                items = list(self.objects(subject=collection, predicate=AS.orderedItems))
+                self._logger.info("Removing %s AS.orderedItems", collection)
+                self.remove((collection, AS.orderedItems, None))
+                self.set((collection, AS.totalItems, rdflib.Literal(0)))
+                self._logger.info("Adding %d items of %s again", len(items), collection)
+                for item in items:
+                    self.add_to_collection(collection, item, deduplicate=False)
+                problems -= 1
+            self._logger.warning(
+                "Collection schema has been fixed, but items order might be unexpected"
+            )
+
+        return problems
+
+    @fsck_check
+    def _fsck_totalitems(self, fix: bool = False) -> int:
+        """AS.totalItems must provide actual item count"""
+        problems = 0
+        for collection in self.subjects(predicate=AS.totalItems):
+            if not self.is_local_prefix(collection):
+                continue
+
+            type_ = self.value(subject=collection, predicate=RDF.type)
+            if type_ == AS.OrderedCollection:
+                actual_count = len(
+                    list(
+                        filter(
+                            lambda t: t[2] != RDF.nil,
+                            self.triples(
+                                (collection, AS.items / (RDF.rest * "*") / RDF.first, None)
+                            ),
+                        )
+                    )
+                )
+            else:
+                actual_count = len(list(self.triples((collection, AS.items, None))))
+            current_count = self.value(subject=collection, predicate=AS.totalItems).value
+
+            if actual_count != current_count:
+                self._logger.warning(
+                    "Actual count %d of %s does not match current totalItems %d",
+                    actual_count,
+                    collection,
+                    current_count,
+                )
+                problems += 1
+
+                if fix:
+                    self._logger.info("Setting AS.totalItems of %s to %d", collection, actual_count)
+                    self.set((collection, AS.totalItems, rdflib.Literal(actual_count)))
+                    problems -= 1
+
         return problems

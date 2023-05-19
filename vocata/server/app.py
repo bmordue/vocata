@@ -57,7 +57,7 @@ async def _lifespan(app: Starlette) -> dict:
     with ActivityPubGraph(
         store=settings.graph.database.store, database=settings.graph.database.uri
     ) as graph, TemporaryDirectory() as metrics_tmp_dir:
-        graph.fsck()
+        graph.fsck(fix=True)
         yield {
             "graph": graph,
             "metrics_registry": get_metrics_registry(metrics_tmp_dir),

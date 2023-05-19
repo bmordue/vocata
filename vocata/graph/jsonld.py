@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
 import json
+from datetime import datetime
 from typing import Self, TYPE_CHECKING
 
 import pyld
@@ -10,12 +11,13 @@ import rdflib
 from pyld import jsonld
 from rdflib.parser import PythonInputSource
 
-from .schema import AS_URI
+from .schema import AS, AS_URI, RDF, VOC
 
 if TYPE_CHECKING:
     from .activitypub import ActivityPubGraph
 
 _ALWAYS_LIST = {"tag", "items", "orderedItems", "to", "bto", "cc", "bcc", "audience"}
+_ALWAYS_INLINE_OBJECT = {AS.Create, AS.Update}
 
 
 def jsonld_single(doc: dict, id_: str, key_: str = "id") -> dict:
@@ -31,7 +33,7 @@ def jsonld_single(doc: dict, id_: str, key_: str = "id") -> dict:
 
     found = False
     for obj in doc["@graph"]:
-        if obj[key_] == id_:
+        if obj[key_] == str(id_):
             new_doc.update(obj)
             found = True
             break
@@ -128,8 +130,15 @@ class JSONLDMixin:
     def activitystreams_cbd(self, uri: str, actor: str | None) -> Self:
         # FIXME this is not precisely a CBD (also fix in README)
         self._logger.debug("Deriving CBD for %s as %s", uri, actor)
-        cbd = self.__class__(None)
+
         subjects = {rdflib.URIRef(uri)}
+        if self.value(subject=rdflib.URIRef(uri), predicate=RDF.type) in _ALWAYS_INLINE_OBJECT:
+            # FIXME reconsider, cf. https://codeberg.org/Vocata/vocata/issues/36#issuecomment-912661
+            object_ = self.value(subject=rdflib.URIRef(uri), predicate=AS.object)
+            if object_:
+                subjects.add(object_)
+
+        cbd = self.__class__(None)
         seen = set()
         while subjects:
             current_subject = subjects.pop()
@@ -147,6 +156,7 @@ class JSONLDMixin:
                     #  they cannot be dereferenced remotely alone
                     subjects.add(o)
             cbd += new_cbd
+
         return cbd.filter_authorized(actor, self)
 
     def add_jsonld(self, data: dict, allow_non_local: bool = False) -> rdflib.Graph:
@@ -180,6 +190,9 @@ class JSONLDMixin:
             # Remvoe all statements about subject and add new
             self._logger.info("Replacing %s from JSON-LD document", s)
             self.remove((s, None, None))
+
+            # Record time this was added
+            self.set((s, VOC.receivedAt, rdflib.Literal(datetime.now())))
 
         self += new_g
         return new_g
