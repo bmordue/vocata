@@ -214,7 +214,7 @@ you can start using it by creating a local actor:
 ```shell
 # Create actor test under the example.com domain,
 # with display name "Test User"
-vocatactl actor create test@example.com "Test User"
+vocatactl actor test@example.com create --name "Test User"
 ```
 
 ## The Vocata logo
