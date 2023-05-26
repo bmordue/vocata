@@ -119,7 +119,7 @@ is that every instance handles a *sub-graph* of the global social
 graph.
 
 The role of [ActivityPub] is to ensure that the sub-graph an
-insance sees includes all nodes that are relevant for the *actors*
+instance sees includes all nodes that are relevant for the *actors*
 on the instance. For that purpose, objects (actors and activities)
 can be **pulled** from other instances (using an *HTTP GET request*
 to the URI of the desired node), and **pushed** (using an
