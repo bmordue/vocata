@@ -34,4 +34,4 @@ start using it.
 
    # Create actor test under the vocata.example.com domain,
    # with display name "Test User"
-   vocatactl actor create test@vocata.example.com "Test User"
+   vocatactl actor test@example.com create --name "Test User"
