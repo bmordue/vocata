@@ -151,13 +151,14 @@ class ActivityPubActivityMixin:
         func_name = f"carry_out_{type_.fragment.lower()}"
         func = getattr(self, func_name, None)
         if func is None:
-            raise NotImplementedError()
+            self._logger.debug(f"Unknown activity: {type_.fragment}")
+            return
 
         try:
             results = func(activity, actor, object_, recipient)
         # FIXME use proper exception handling
         except Exception as ex:
-            self.set((activity, VOC.processRessult, rdflib.Literal(str(ex))))
+            self.set((activity, VOC.processResult, rdflib.Literal(str(ex))))
             raise
 
         for result in results:
