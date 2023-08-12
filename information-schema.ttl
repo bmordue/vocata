@@ -44,6 +44,16 @@ MUST be a hash in PBKDF2-SHA512 format.""" ;
 The object IR MUST NOT have a path component, and it SHOULD be a Service actor.""" ;
          rdfs:label "Is local prefix" .
 
+###  https://docs.vocata.one/information-schema#role
+:hasServerRole rdf:type owl:DatatypeProperty ;
+         rdfs:subPropertyOf owl:topDataProperty ;
+         rdf:type owl:FunctionalProperty ;
+         rdfs:domain <http://www.w3.org/ns/activitystreams#Actor> ;
+         rdfs:range xsd:string ;
+         rdfs:comment """Determines the role this Actor has on this Vocata server.
+
+The object IR MUST NOT have a path component, and it SHOULD be a Service actor.""" ;
+         rdfs:label "Is local prefix" .
 
 ###  https://docs.vocata.one/information-schema#processResult
 :processResult rdf:type owl:DatatypeProperty ;
