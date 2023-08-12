@@ -143,6 +143,11 @@ class ActivityPubActorMixin:
     def set_actor_password(self, actor: str, password: str) -> None:
         hash = pbkdf2_sha256.hash(password)
         self.set((rdflib.URIRef(actor), VOC.hashedPassword, rdflib.Literal(hash)))
+        self._logger.info("Updated actor %s password %s", actor)
+
+    def set_actor_role(self, actor: str, role: str) -> None:
+        self.set((rdflib.URIRef(actor), VOC.hasServerRole, rdflib.Literal(role)))
+        self._logger.info("Updated actor %s with role %s", actor, role)
 
     def verify_actor_password(self, actor: str, password: str) -> bool:
         if isinstance(actor, str):
