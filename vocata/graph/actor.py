@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
 import re
+from enum import StrEnum
 
 import rdflib
 import shortuuid
@@ -20,6 +21,10 @@ ACCT_RE = f"{USERPART_RE}@{HOST_RE}"
 
 # FIXME should we use something else than users?
 LOCAL_ACTOR_URI_FORMAT = "https://{domain}/users/{local}"
+
+
+class ActorSystemRole(StrEnum):
+    admin = "admin"
 
 
 class ActivityPubActorMixin:

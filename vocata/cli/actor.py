@@ -4,7 +4,7 @@
 
 from enum import StrEnum
 from typing import Optional
-
+from vocata.graph.actor import ActorSystemRole
 import typer
 
 
@@ -14,12 +14,6 @@ class ActorType(StrEnum):
     organization = "Organization"
     person = "Person"
     service = "Service"
-
-
-class ActorSystemRole(StrEnum):
-    admin = "admin"
-    moderator = "mod"
-    member = "member"
 
 
 app = typer.Typer(help="Manage ActivityPub actors")
@@ -42,8 +36,8 @@ def create(
     name: Optional[str] = typer.Option(None, help="Display name of new actor"),
     actor_type: ActorType = typer.Option(ActorType.person, help="Actor type of new actor"),
     role: ActorSystemRole = typer.Option(
-        ActorSystemRole.member,
-        help="Actor role: administrator, moderator, member",
+        None,
+        help="Actor role",
     ),
     force: bool = typer.Option(
         False, help="Force creation even if prefix is not local (DANGEROUS!)"
@@ -64,7 +58,8 @@ def create(
             raise typer.Exit(code=1)
 
         uri = graph.create_actor_from_acct(account, name or account, actor_type.value, force)
-        graph.set_actor_role(uri, role.value)
+        if role:
+            graph.set_actor_role(uri, role.value)
 
     if not uri:
         raise typer.Exit(code=2)
