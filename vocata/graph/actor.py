@@ -143,7 +143,11 @@ class ActivityPubActorMixin:
     def set_actor_password(self, actor: str, password: str) -> None:
         hash = pbkdf2_sha256.hash(password)
         self.set((rdflib.URIRef(actor), VOC.hashedPassword, rdflib.Literal(hash)))
-        self._logger.info("Updated actor %s password %s", actor)
+        self._logger.info("Updated actor %s password", actor)
+
+    def get_actor_role(self, actor: str) -> None:
+        role = self.value(rdflib.URIRef(actor), VOC.hasServerRole)
+        return role
 
     def set_actor_role(self, actor: str, role: str) -> None:
         self.set((rdflib.URIRef(actor), VOC.hasServerRole, rdflib.Literal(role)))

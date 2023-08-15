@@ -4,7 +4,7 @@
 
 from enum import StrEnum
 from typing import Optional
-
+from ..admin import auth
 import typer
 
 
@@ -14,12 +14,6 @@ class ActorType(StrEnum):
     organization = "Organization"
     person = "Person"
     service = "Service"
-
-
-class ActorSystemRole(StrEnum):
-    admin = "admin"
-    moderator = "mod"
-    member = "member"
 
 
 app = typer.Typer(help="Manage ActivityPub actors")
@@ -41,8 +35,8 @@ def create(
     ctx: typer.Context,
     name: Optional[str] = typer.Option(None, help="Display name of new actor"),
     actor_type: ActorType = typer.Option(ActorType.person, help="Actor type of new actor"),
-    role: ActorSystemRole = typer.Option(
-        ActorSystemRole.member,
+    role: auth.ActorSystemRole = typer.Option(
+        auth.ActorSystemRole.member,
         help="Actor role: administrator, moderator, member",
     ),
     force: bool = typer.Option(
