@@ -1,0 +1,62 @@
+{% import 'partials/data-table.html' as dt %}
+
+{% extends "base/base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Tools</h1>
+</div>
+
+<div class="container mt-3">
+    <!-- Content here -->
+    <h2 class="mb-3">Local Data</h2>
+
+    <p><small class="">What RDF data do we have on the provided URI.</small></p>
+
+    <form method="GET" action="/advanced/tools">
+        <input type="hidden" name="action" value="view">
+        <div class="mb-3">
+            <label for="value" class="form-label">Object URI</label>
+            <input type="url" class="form-control" id="value" name="value" placeholder=""
+                value="{{ view_value or '' }}">
+        </div>
+        <button type="submit" class="btn btn-light">View Object</button>
+    </form>
+
+    <div class="mt-3 mb-2">
+        <h3>Known Information on <small class="text-muted">{{ view_value }}</small></h3>
+        {% if view_data %}
+        {{ dt.datatable(["Property", "Value"], view_data) }}
+        {% else %}
+        <p><small>No data for {{ account }} found in the local datastore.</small></p>
+        {% endif %}
+    </div>
+
+</div>
+
+
+<div class="container mt-3">
+    <h2 class="h3 mb-3">Pull Object</h2>
+
+    <p><small class="">Load data for an object into this instance by URI, then show the RDF data we then have on
+            it.</small></p>
+
+    <form method="POST" action="/advanced/tools">
+        <input type="hidden" name="action" value="pull">
+        <div class="mb-3">
+            <label for="value" class="form-label">Object URI</label>
+            <input type="url" class="form-control" id="value" name="value" placeholder=""
+                value="{{ pull_value or '' }}">
+        </div>
+        <button type="submit" class="btn btn-light">Pull Object</button>
+    </form>
+
+    {% if pull_data %}
+    <div class="mt-3 mb-2">
+        <h3 class="h4">Pulled Remote data for <small class="text-muted">{{ pull_value }}</small></h3>
+        {{ dt.datatable(["Property", "Value"], pull_data) }}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

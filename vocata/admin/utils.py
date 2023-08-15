@@ -1,7 +1,5 @@
+import typing as t
 import logging
-
-# import rdflib
-# from collections import defaultdict
 
 from vocata.graph import ActivityPubGraph
 from vocata.graph.schema import VOC
@@ -31,7 +29,7 @@ def get_prefixes(graph):
     return data
 
 
-def get_properties(graph, s):
+def get_properties(graph, s) -> t.Dict:
     logger.debug("Get properties for %r" % s)
     with graph:
         t = list(graph.triples((s, None, None)))
