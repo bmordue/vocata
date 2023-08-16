@@ -4,10 +4,13 @@
 
 from contextlib import asynccontextmanager
 from tempfile import TemporaryDirectory
+from pathlib import Path
 
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.routing import Mount, Route
+from starlette.templating import Jinja2Templates
+from starlette.staticfiles import StaticFiles
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from ..graph import ActivityPubGraph
@@ -18,8 +21,14 @@ from .middleware import ActivityPubActorMiddleware
 from .nodeinfo import NodeInfoEndpoint, nodeinfo_wellknown
 from .oauth import OAuthMetadataEndpoint
 from .webfinger import WebfingerEndpoint
+from .signin import AuthSigninEndpoint, AuthSignoutEndpoint
+
 
 settings = get_settings()
+
+BASE_UI_PATH = Path(__file__).parent / "web"
+BASE_STATIC_PATH = BASE_UI_PATH / "static"
+BASE_TEMPLATES_PATH = BASE_UI_PATH / "templates"
 
 middlewares = [
     Middleware(ProxyHeadersMiddleware, trusted_hosts=settings.server.trusted_proxies),
@@ -45,6 +54,14 @@ routes = [
         ],
         name="functional",
     ),
+    Mount(
+        "/auth",
+        routes=[
+            Route("/signin", AuthSigninEndpoint, name="signin", methods=["GET", "POST"]),
+            Route("/signout", AuthSignoutEndpoint, name="signout", methods=["GET"]),
+        ],
+    ),
+    Mount("/static", StaticFiles(directory=BASE_STATIC_PATH), name="static"),
     Route("/{path:path}", ActivityPubEndpoint, methods=["GET", "POST"]),
 ]
 
@@ -52,6 +69,8 @@ routes = [
 @asynccontextmanager
 async def _lifespan(app: Starlette) -> dict:
     settings = get_settings()
+
+    templates = Jinja2Templates(BASE_TEMPLATES_PATH)
 
     # FIXME pass logger here
     with ActivityPubGraph(
@@ -62,6 +81,7 @@ async def _lifespan(app: Starlette) -> dict:
             "graph": graph,
             "metrics_registry": get_metrics_registry(metrics_tmp_dir),
             "used_prefixes": set(),
+            "templates": templates,
         }
 
 
