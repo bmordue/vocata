@@ -3,17 +3,47 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
 from base64 import b64decode
-from typing import Callable
-
+from typing import Callable, List
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp
 
-from ..graph.authz import PUBLIC_ACTOR
+from ..graph.authz import PUBLIC_ACTOR, SESSION_KEY
 from ..util.http import HTTPSignatureAuth
 
 
 class ActivityPubActorMiddleware(BaseHTTPMiddleware):
+    def __init__(
+        self,
+        app: ASGIApp,
+        pass_thru_paths: str | List | None = None,
+    ):
+        super().__init__(app)
+        self.app = app
+        if pass_thru_paths is None:
+            pass_thru_paths = []
+        elif isinstance(pass_thru_paths, str):
+            pass_thru_paths = [pass_thru_paths]
+
+        self.pass_thru_paths = pass_thru_paths
+
+    def _get_actor_for_credentials(self, request, user, password):
+        if "@" not in user:
+            request.state.graph._logger.debug("Appending netloc to username")
+            domain = request.url.netloc
+            user = f"{user}@{domain}"
+
+        actor = request.state.graph.get_canonical_uri(f"acct:{user}")
+        if not actor:
+            raise KeyError("Account is not linked to an actor")
+        request.state.graph._logger.debug("Authenticated %s", actor)
+
+        valid = request.state.graph.verify_actor_password(actor, password)
+        if valid:
+            return actor
+        raise ValueError("Invalid password")
+
     async def determine_actor_from_http_signature(self, request: Request) -> str:
         key_id = await HTTPSignatureAuth.from_signed_request(request).verify_request(request)
         request.state.graph._logger.debug("Request is signed by key ID %s", key_id)
@@ -31,20 +61,35 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
         credentials = request.headers["Authorization"].split(" ", 1)[1]
         user, password = b64decode(credentials).decode("utf-8").split(":", 1)
 
-        if "@" not in user:
-            request.state.graph._logger.debug("Appending netloc to username")
-            domain = request.url.netloc
-            user = f"{user}@{domain}"
+        actor = self._get_actor_for_credentials(request, user, password)
+        return actor
+
+    async def determine_actor_from_session(self, request: Request) -> str:
+        request.state.graph._logger.debug("Doing Session auth")
+
+        user = request.session.get(SESSION_KEY)
+        if not user:
+            raise KeyError("No user in session")
 
         actor = request.state.graph.get_canonical_uri(f"acct:{user}")
         if not actor:
             raise KeyError("Account is not linked to an actor")
-        request.state.graph._logger.debug("Authenticatin %s", actor)
 
-        valid = request.state.graph.verify_actor_password(actor, password)
-        if valid:
-            return actor
-        raise ValueError("Invalid password")
+        request.state.graph._logger.debug("Authenticated %s", actor)
+        return actor
+
+    async def determine_actor_from_form(self, request: Request) -> str:
+        request.state.graph._logger.debug("Doing Form auth")
+
+        form = await request.form()
+        user = form.get("user")
+        password = form.get("password")
+
+        if not user:
+            raise ValueError("Missing user value for authentication")
+
+        actor = self._get_actor_for_credentials(request, user, password)
+        return actor
 
     async def determine_actor(self, request: Request) -> str:
         actor = PUBLIC_ACTOR
@@ -61,9 +106,24 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
                 actor = await self.determine_actor_from_basic_auth(request)
             elif scheme.lower() == "signature":
                 actor = await self.determine_actor_from_http_signature(request)
+        else:
+            # Try the session, where a form-logged-in user will be stored
+            if request.session is not None:
+                try:
+                    actor = await self.determine_actor_from_session(request)
+                except KeyError:
+                    pass
+
+            # if we still havent found a non-public user, see if there's a
+            # form submission. really this should be limited to requests
+            # to /auth/signin but i don't have a good idea on how/where
+            # to do that yet
+            if actor == PUBLIC_ACTOR:
+                actor = await self.determine_actor_from_form(request)
 
         # Ensure the actor is on the graph for later authorization
-        request.state.graph.pull(actor)
+        if actor:
+            request.state.graph.pull(actor)
         return actor
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
@@ -74,6 +134,15 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
         try:
             request.state.actor = await self.determine_actor(request)
         except Exception as ex:
+            # if we found  an actor then we go on our way, but
+            # if and exception was raised, check and see if the path is ok
+            # to pass thru to anyway (ie public)
+            # FIXME: Add to the graph somehow
+            if any([request.url.path.startswith(p) for p in self.pass_thru_paths]):
+                request.state.actor = None
+                response = await call_next(request)
+                return response
+
             return JSONResponse({"error": str(ex)}, 401)
         request.state.graph._logger.info("Actor was determined as %s", request.state.actor)
 

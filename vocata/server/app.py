@@ -8,6 +8,7 @@ from pathlib import Path
 
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
+from starlette.middleware.sessions import SessionMiddleware
 from starlette.routing import Mount, Route
 from starlette.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
@@ -22,6 +23,8 @@ from .nodeinfo import NodeInfoEndpoint, nodeinfo_wellknown
 from .oauth import OAuthMetadataEndpoint
 from .webfinger import WebfingerEndpoint
 from .signin import AuthSigninEndpoint, AuthSignoutEndpoint
+from .admin import main as admin
+
 
 
 settings = get_settings()
@@ -32,8 +35,9 @@ BASE_TEMPLATES_PATH = BASE_UI_PATH / "templates"
 
 middlewares = [
     Middleware(ProxyHeadersMiddleware, trusted_hosts=settings.server.trusted_proxies),
+    Middleware(SessionMiddleware, secret_key=settings.admin.session_secret_key),
     Middleware(RequestMetricsMiddleware),
-    Middleware(ActivityPubActorMiddleware),
+    Middleware(ActivityPubActorMiddleware, pass_thru_paths=["/auth", "/static"]),
 ]
 routes = [
     Mount(
@@ -61,6 +65,7 @@ routes = [
             Route("/signout", AuthSignoutEndpoint, name="signout", methods=["GET"]),
         ],
     ),
+    Mount("/admin", name="admin", routes=admin.routes),
     Mount("/static", StaticFiles(directory=BASE_STATIC_PATH), name="static"),
     Route("/{path:path}", ActivityPubEndpoint, methods=["GET", "POST"]),
 ]

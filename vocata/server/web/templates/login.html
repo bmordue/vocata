@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Vocata {{ title }}</title>
+
+    <!-- Bulma is included -->
+    <link rel="stylesheet" href="/static/css/main.min.css">
+
+    <!-- Fonts -->
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet" type="text/css">
+
+    <link rel="stylesheet" href="/static/css/admin.css">
+
+</head>
+
+<body>
+    <div id="app">
+        <div class="columns">
+            <div class="column"></div>
+            <div class="column is-half">
+                <div class="container is-align-self-auto mt-6">
+                    <section class="section is-title-bar signin-header">
+                        <div class="container">
+                            <img src="/static/img/vocata.svg" style="height: 35px">
+                            <h3 class="is-size-3">Signin</h3>
+                        </div>
+                    </section>
+                    <section class="section is-main-section signin-panel">
+                        <form action="{{ url_for('signin') }}" method="POST">
+                            <div class="field">
+                                <p class="control has-icons-left">
+                                    <input class="input is-success" type="email" name="user"
+                                        placeholder="you@locata.org" value="">
+                                    <span class="icon is-small is-left"><i class="mdi mdi-at"></i></span>
+                                </p>
+                            </div>
+                            <div class="field">
+                                <p class="control is-expanded has-icons-left">
+                                    <input class="input is-success" type="password" name="password" value="">
+                                    <span class="icon is-small is-left"><i class="mdi mdi-lock"></i></span>
+                                </p>
+                            </div>
+                            <div class="field is-grouped">
+                                <div class="control">
+                                    <button type="submit" class="button is-primary">
+                                        <span>Signin</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+                    {% include "partials/footer.html" %}
+                </div>
+            </div>
+            <div class="column"></div>
+        </div>
+    </div>
+
+    <!-- Scripts below are for demo only -->
+    <script type="text/javascript" src="/static/js/main.min.js"></script>
+
+    <!-- Icons below are for demo only. Feel free to use any icon pack. Docs: https://bulma.io/documentation/elements/icon/ -->
+    <link rel="stylesheet" href="/static/css/materialdesignicons.min.css">
+</body>
+
+</html>

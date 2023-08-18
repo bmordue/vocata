@@ -25,6 +25,8 @@ PUBLIC_ACTOR = AS.Public
 
 HIDE_PREDICATES = {AS.bto, AS.bcc, SEC.privateKey, SEC.privateKeyPem}
 
+SESSION_KEY = "user"
+
 
 class AccessMode(StrEnum):
     READ = "read"
