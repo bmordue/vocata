@@ -8,8 +8,6 @@ from starlette import status
 
 import logging
 
-from vocata.graph.authz import AccessMode
-
 if t.TYPE_CHECKING:
     from starlette.templating import TemplateResponse
 
@@ -18,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def handle_signin_error(request, err):
     return RedirectResponse(
-        str(request.url_for("signin")) + "?error={err}",
+        str(request.url_for("auth:signin")) + "?error={err}",
         status_code=status.HTTP_401_UNAUTHORIZED,
     )
 
@@ -73,11 +71,13 @@ class AuthSigninEndpoint(HTTPEndpoint):
 class AuthSignoutEndpoint(HTTPEndpoint):
     async def get(self, request) -> "TemplateResponse":
         # clean session and return HTML direct
-
+        # request.session.clear()
+        # # https://stackoverflow.com/questions/68460918/starlette-session-state-clearing
+        # request.session["logged_out"] = True
         return request.state.templates.TemplateResponse(
             "redirect.html",
             {
                 "request": request,
-                "location": request.url_for("signin"),
+                "location": request.url_for("auth:signin"),
             },
         )

@@ -6,11 +6,20 @@ from base64 import b64decode
 from typing import Callable, List
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
+from starlette.responses import JSONResponse, Response, RedirectResponse
 from starlette.types import ASGIApp
 
 from ..graph.authz import PUBLIC_ACTOR, SESSION_KEY
+from ..graph.activitypub import AP_CONTENT_TYPES
 from ..util.http import HTTPSignatureAuth
+
+
+def accepts_ap_types(request):
+    # text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+    header = request.headers.get("Accept")
+    accepts_raw = header.split(",")
+    accepts = [v.split(";", 1)[0] for v in accepts_raw]
+    return any([v in AP_CONTENT_TYPES for v in accepts])
 
 
 class ActivityPubActorMiddleware(BaseHTTPMiddleware):
@@ -89,9 +98,30 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
             raise ValueError("Missing user value for authentication")
 
         actor = self._get_actor_for_credentials(request, user, password)
+        # so that the session authenticates next time
+        request.session[SESSION_KEY] = user
         return actor
 
     async def determine_actor(self, request: Request) -> str:
+        actor = None
+        if not accepts_ap_types(request):
+            request.state.graph._logger.debug("Not an AP client! Try web auth...")
+            try:
+                actor = await self.determine_actor_from_session(request)
+            except KeyError:
+                request.state.graph._logger.debug("Could not get actor from session")
+                pass
+            try:
+                actor = await self.determine_actor_from_form(request)
+            except ValueError:
+                request.state.graph._logger.debug("Could not get actor from form")
+                pass
+
+            if not actor:
+                raise ValueError("Unauthorized")
+
+            return actor
+
         actor = PUBLIC_ACTOR
 
         if "Signature" in request.headers:
@@ -121,8 +151,6 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
             if actor == PUBLIC_ACTOR:
                 actor = await self.determine_actor_from_form(request)
 
-        # Ensure the actor is on the graph for later authorization
-        if actor:
             request.state.graph.pull(actor)
         return actor
 
@@ -131,6 +159,15 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
         # FIXME try to avoid this
         request.state.body = await request.body()
 
+        # is this a public path?
+        public = any([request.url.path.startswith(p) for p in self.pass_thru_paths])
+
+        # public request, send them through
+        if public:
+            request.state.actor = None
+            response = await call_next(request)
+            return response
+
         try:
             request.state.actor = await self.determine_actor(request)
         except Exception as ex:
@@ -138,12 +175,15 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
             # if and exception was raised, check and see if the path is ok
             # to pass thru to anyway (ie public)
             # FIXME: Add to the graph somehow
-            if any([request.url.path.startswith(p) for p in self.pass_thru_paths]):
-                request.state.actor = None
-                response = await call_next(request)
+
+            # non-AP client asking for an authenticated endpoint
+            # send them to the login
+            if not accepts_ap_types(request) and not public:
+                response = RedirectResponse(f"/auth/signin?t={request.url.path}")
                 return response
 
             return JSONResponse({"error": str(ex)}, 401)
+
         request.state.graph._logger.info("Actor was determined as %s", request.state.actor)
 
         request.state.subject = str(request.url).removesuffix("/")

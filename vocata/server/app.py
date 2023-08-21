@@ -60,6 +60,7 @@ routes = [
     ),
     Mount(
         "/auth",
+        name="auth",
         routes=[
             Route("/signin", AuthSigninEndpoint, name="signin", methods=["GET", "POST"]),
             Route("/signout", AuthSignoutEndpoint, name="signout", methods=["GET"]),

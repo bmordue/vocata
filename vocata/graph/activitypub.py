@@ -20,6 +20,11 @@ from .prefix import ActivityPubPrefixMixin
 from .admin import ActivityPubAdminMixin
 from .schema import AS, RDF, VOC
 
+AP_CONTENT_TYPES = {
+    'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+    "application/activity+json",
+}
+
 
 class ActivityPubGraph(
     rdflib.Graph,
