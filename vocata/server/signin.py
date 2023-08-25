@@ -1,5 +1,4 @@
 import typing as t
-from urllib.parse import urlparse
 from starlette.endpoints import HTTPEndpoint
 
 from starlette.requests import Request
