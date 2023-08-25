@@ -6,6 +6,7 @@ import os
 from contextlib import contextmanager
 from typing import Callable, Generator
 from urllib.parse import urlparse
+from http.cookiejar import CookieJar
 
 import pytest
 from rdflib import RDF, Literal, URIRef
@@ -18,6 +19,8 @@ from vocata.server.app import app
 _graph: ActivityPubGraph | None = None
 
 DEFAULT_PREFIX = "https://example.com"
+DEFAULT_ROLE = None
+BASE_URL = "https://testserver"
 
 
 @pytest.fixture(scope="module")
@@ -61,16 +64,18 @@ def get_actors(
 ) -> Callable[[int | None, str | None], Generator[list[URIRef], None, None]]:
     @contextmanager
     def __get_actors(
-        n: int | None = 3, prefix: str | None = DEFAULT_PREFIX
+        n: int | None = 3, prefix: str | None = DEFAULT_PREFIX, role: str | None = DEFAULT_ROLE
     ) -> Generator[list[URIRef], None, None]:
         with get_prefix(prefix) as (prefix, domain):
             actors = []
             for i in range(n):
-                actors.append(
-                    graph.create_actor_from_acct(
-                        f"pytest{i}@{domain}", f"Pytest Test Person {i}", "Person", force=False
-                    )
+                actor = graph.create_actor_from_acct(
+                    f"pytest{i}@{domain}", f"Pytest Test Person {i}", "Person", force=False
                 )
+                if role:
+                    graph.set_actor_role(actor, role)
+
+                actors.append(actor)
             yield actors
             for actor in actors:
                 graph.remove((actor, None, None))
@@ -107,8 +112,28 @@ def get_notes(
 def client() -> TestClient:
     global _graph
 
+    headers = {"Accept": "application/activity+json"}
+
     os.environ["VOC_GRAPH__DATABASE__STORE"] = "Memory"
     os.environ["VOC_GRAPH__DATABASE__URI"] = ""
-    with TestClient(app, base_url="https://testserver") as client:
+    with TestClient(app, base_url=BASE_URL, headers=headers) as client:
+        _graph = client.app_state["graph"]
+        yield client
+
+
+@pytest.fixture(scope="module")
+def webclient() -> TestClient:
+    global _graph
+
+    headers = {"Accept": "test/html"}
+    cookie_jar = CookieJar()
+    os.environ["VOC_GRAPH__DATABASE__STORE"] = "Memory"
+    os.environ["VOC_GRAPH__DATABASE__URI"] = ""
+    with TestClient(
+        app,
+        base_url=BASE_URL,
+        headers=headers,
+        cookies=cookie_jar,
+    ) as client:
         _graph = client.app_state["graph"]
         yield client
