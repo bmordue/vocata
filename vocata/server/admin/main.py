@@ -1,10 +1,12 @@
 import typing as t
-from urllib.parse import urlparse
 
-# from starlette.requests import Request
 from starlette.endpoints import HTTPEndpoint
-from starlette.responses import RedirectResponse
-from starlette.routing import Route, Mount
+
+from starlette.requests import Request
+
+from starlette.routing import Route
+
+from ..auth import requires_auth
 
 import logging
 
@@ -15,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 class AdminDashboardEndpoint(HTTPEndpoint):
-    async def get(self, request) -> "TemplateResponse":
-        # test if actor was already identified in the session
+    @requires_auth
+    async def get(self, request: Request) -> "TemplateResponse":
+        request.state.graph._logger.info("AdminDashboardEndpoint.get()")
 
         return request.state.templates.TemplateResponse(
             "admin/dashboard.html",
@@ -26,4 +29,4 @@ class AdminDashboardEndpoint(HTTPEndpoint):
         )
 
 
-routes = [Route("/", endpoint=AdminDashboardEndpoint, name="dashboard")]
+routes = [Route("/", AdminDashboardEndpoint, name="dashboard")]

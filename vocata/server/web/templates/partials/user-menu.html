@@ -1,0 +1,37 @@
+{% with user = request.state.user %}
+
+<div class="navbar-item has-dropdown has-dropdown-with-icons has-divider has-user-avatar is-hoverable">
+    <a class="navbar-link is-arrowless">
+        <div class="is-user-avatar">
+            {% if user.avatar %}
+            <img src="{{ user.avatar }}" alt="{{ user.name }}">
+            {% else %}
+            {% include 'partials/default-avatar.svg'%}
+            {% endif %}
+        </div>
+        <div class="is-user-name"><span>{{ user.name or user.account }}</span></div>
+        <span class="icon"><i class="mdi mdi-chevron-down"></i></span>
+    </a>
+    <div class="navbar-dropdown">
+        <a href="profile.html" class="navbar-item">
+            <span class="icon"><i class="mdi mdi-account"></i></span>
+            <span>My Profile</span>
+        </a>
+        {#
+        <a class="navbar-item">
+            <span class="icon"><i class="mdi mdi-settings"></i></span>
+            <span>Settings</span>
+        </a>
+        <a class="navbar-item">
+            <span class="icon"><i class="mdi mdi-email"></i></span>
+            <span>Messages</span>
+        </a>
+        #}
+        <hr class="navbar-divider">
+        <a class="navbar-item" href="{{ url_for('auth:signout') }}">
+            <span class="icon"><i class="mdi mdi-logout"></i></span>
+            <span>Log Out {{ user.username }}</span>
+        </a>
+    </div>
+</div>
+{% endwith %}

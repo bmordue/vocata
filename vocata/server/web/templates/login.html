@@ -1,3 +1,5 @@
+{% set error = request.query_params.get("error") %}
+
 <!DOCTYPE html>
 <html lang="en" class="">
 
@@ -30,8 +32,15 @@
                             <h3 class="is-size-3">Signin</h3>
                         </div>
                     </section>
+                    {% if error %}
+                    <section class="section signin-panel">
+                        <div class="container">
+                            <p>{{ error }}</p>
+                        </div>
+                    </section>
+                    {% endif %}
                     <section class="section is-main-section signin-panel">
-                        <form action="{{ url_for('signin') }}" method="POST">
+                        <form action="{{ url_for('auth:signin') }}" method="POST">
                             <div class="field">
                                 <p class="control has-icons-left">
                                     <input class="input is-success" type="email" name="user"

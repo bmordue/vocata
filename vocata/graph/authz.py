@@ -38,6 +38,10 @@ class AccessMode(StrEnum):
     UNDO = "undo"
 
 
+class ActorSystemRole(StrEnum):
+    admin = "admin"
+
+
 class ActivityPubAuthzMixin:
     def is_a_box(self, subject: rdflib.term.Identifier | str) -> bool:
         return (None, HAS_BOX, subject) in self
