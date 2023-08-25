@@ -6,7 +6,7 @@ from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
 from starlette import status
-from ..graph.authz import PUBLIC_ACTOR, SESSION_KEY
+from ..graph.authz import PUBLIC_ACTOR
 from .middleware import DetermineActor
 import logging
 
@@ -41,27 +41,16 @@ class AuthSigninEndpoint(HTTPEndpoint):
 
     async def get(self, request: Request) -> "TemplateResponse":
         request.state.graph._logger.debug(f"AuthSigninEndpoint.get {request.url.path}")
-        print(f"sign in state dictionary: {request.state.__dict__}")
+
         # test if actor was already identified in the session
         if self.is_authenticated(request):
-            uri = request.url_for("admin:dashboard")
-            # protect against being redirected off
-            # vocata
-            target = request.query_params.get("t")
-            if target:
-                potential_uri = urlparse(t)
-                with request.state.graph as graph:
-                    p = graph.get_url_prefix(potential_uri)
-                    if graph.is_local_prefix(p):
-                        uri = potential_uri
-
-            return RedirectResponse(uri)
+            return RedirectResponse(request.url_for("admin:dashboard"))
 
         return request.state.templates.TemplateResponse(
             "login.html",
             {
                 "request": request,
-                "target": request.query_params.get("t"),
+                "title": "Login",
             },
         )
 
