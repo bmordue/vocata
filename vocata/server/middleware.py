@@ -79,7 +79,7 @@ class DetermineActor:
             if self.actor_required or required:
                 raise KeyError("No user in session")
             return None
-        print(user)
+
         with request.state.graph as graph:
             actor = graph.get_canonical_uri(f"acct:{user}")
 
@@ -93,7 +93,7 @@ class DetermineActor:
 
     async def from_form(self, request: Request, required: bool = False) -> str:
         form = await request.form()
-        print(form)
+
         if not form:
             if self.actor_required or required:
                 raise ValueError("Missing user value for authentication")
@@ -109,7 +109,7 @@ class DetermineActor:
             return None
 
         actor = self._get_actor_for_credentials(request, user, password)
-        print(actor, user)
+
         # so that the session authenticates next time
         request.session[SESSION_KEY] = user
         return actor
@@ -124,7 +124,6 @@ class WebAuthMiddleware(BaseHTTPMiddleware):
         return actor or PUBLIC_ACTOR
 
     async def dispatch(self, request: Request, call_next: Callable):
-        print(f"WebAuthMiddleware.dispatch path: {request.url.path} cookies: {request.cookies}")
         # request.state.graph._logger.debug(f"WebAuthMiddleware.dispatch() {actor}")
         actor = await self.determine_actor(request)
         request.state.actor = actor
@@ -155,8 +154,6 @@ class ActivityPubActorMiddleware(BaseHTTPMiddleware):
         return actor
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        print(f"ActivityPubActorMiddleware.dispatch cookies{request.cookies}")
-
         # We need to read early because some clients have really short timeouts
         # FIXME try to avoid this
         request.state.body = await request.body()

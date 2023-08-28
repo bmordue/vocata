@@ -35,7 +35,6 @@ AUTH_ERROR = (
 
 class AuthSigninEndpoint(HTTPEndpoint):
     def is_authenticated(self, request: Request):
-        print(f"is_authenticated: {request.state.actor}")
         return hasattr(request.state, "actor") and request.state.actor is not PUBLIC_ACTOR
 
     async def get(self, request: Request) -> "TemplateResponse":

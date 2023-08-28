@@ -1,12 +1,11 @@
 import typing as t
 
 from starlette.endpoints import HTTPEndpoint
-
 from starlette.requests import Request
-
 from starlette.routing import Route
 
 from ..auth import requires_auth
+from .users import AdminUsersEndpoint, AdminUserEndpoint
 
 import logging
 
@@ -29,4 +28,8 @@ class AdminDashboardEndpoint(HTTPEndpoint):
         )
 
 
-routes = [Route("/", AdminDashboardEndpoint, name="dashboard")]
+routes = [
+    Route("/", AdminDashboardEndpoint, name="dashboard"),
+    Route("/users/{account}/edit", AdminUserEndpoint, name="users_edit"),
+    Route("/users", AdminUsersEndpoint, name="users_manage"),
+]

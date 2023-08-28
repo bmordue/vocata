@@ -54,7 +54,6 @@ def test_dashboard(webclient: TestClient, graph: ActivityPubGraph, get_actors):
         # login
         resp = webclient.post("/auth/signin", data={"user": user, "password": "pass"})
         assert resp.status_code == status.HTTP_200_OK
-        print(f"webclient cookies: {webclient.cookies}")
 
         # load dashboard
         resp = webclient.get("/admin")

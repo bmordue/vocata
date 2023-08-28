@@ -1,4 +1,3 @@
-import types as t
 from functools import wraps
 from rdflib import URIRef
 
@@ -43,7 +42,6 @@ class APUser(SimpleUser):
             obj.role = graph.value(actor, VOC.hasServerRole)
             obj.avatar = graph.value(actor, AS.avatar)
 
-        print(obj.__dict__)
         return obj
 
 

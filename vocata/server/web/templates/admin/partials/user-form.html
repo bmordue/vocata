@@ -1,0 +1,94 @@
+<div class="card">
+    <header class="card-header">
+        <p class="card-header-title">
+            <span class="icon"><i class="mdi mdi-ballot"></i></span>
+            {{ form_title or "New User "}}
+        </p>
+    </header>
+    <div class="card-content">
+        <form method="POST" action="{{ request.url_for('admin:users_edit', account=edituser.username) }}">
+            <input type="hidden" name="actor" value="{{ actor }}">
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">Account Name</label>
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <p class="control is-expanded has-icons-left">
+                            <input class="input" name="username" type="text" placeholder="Name"
+                                value="{{ edituser.username if edituser else '' }}">
+                            <span class="icon is-small is-left"><i class="mdi mdi-account"></i></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">Display Name</label>
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <p class="control is-expanded has-icons-left">
+                            <input class="input" name="name" type="text" placeholder="Name"
+                                value="{{ edituser.name if edituser else '' }}">
+                            <span class="icon is-small is-left"><i class="mdi mdi-account"></i></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="field has-check is-horizontal">
+                <div class="field-label"><label class="label">Email</label></div>
+                <div class="field-body">
+                    <div class="field">
+                        <p class="control is-expanded has-icons-left has-icons-right">
+                            <input class="input is-success" name="email" type="email" placeholder="Email" value="{{
+                                                    edituser.email if edituser and edituser.email else '' }}">
+                            <span class="icon is-small is-left"><i class="mdi mdi-mail"></i></span>
+                            <span class="icon is-small is-right"><i class="mdi mdi-check"></i></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field has-check is-horizontal">
+                <div class="field-label"><label class="label">Role</label></div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="field is-grouped-multiline is-grouped">
+                            <div class="control">
+                                <label class="b-checkbox checkbox"><input {% if edituser and edituser.isadmin
+                                        %}checked='checked' {% endif%} type="checkbox" name="admin" value="yes">
+                                    <span class="check is-primary"></span>
+                                    <span class="control-label">Admin</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <!-- Left empty for spacing -->
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="field is-grouped">
+                            <div class="control">
+                                <button type="submit" class="button is-primary">
+                                    <span>{{ action_label or "Save" }}</span>
+                                </button>
+                            </div>
+                            <div class="control">
+                                <button type="button" class="button is-outlined">
+                                    <span>Reset</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
