@@ -41,8 +41,9 @@
                 <div class="field-body">
                     <div class="field">
                         <p class="control is-expanded has-icons-left has-icons-right">
-                            <input class="input is-success" name="email" type="email" placeholder="Email" value="{{
-                                                    edituser.email if edituser and edituser.email else '' }}">
+                            <input class="input is-success" name="email" type="email" placeholder="Email"
+                                value="{{
+                                                    edituser.email.removeprefix('mailto:') if edituser and edituser.email else '' }}">
                             <span class="icon is-small is-left"><i class="mdi mdi-mail"></i></span>
                             <span class="icon is-small is-right"><i class="mdi mdi-check"></i></span>
                         </p>

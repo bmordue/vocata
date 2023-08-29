@@ -59,12 +59,11 @@ user_query = sparql.prepareQuery(user_query, initNs=NAMESPACES)
 
 insert_user_query = """
 INSERT DATA {
-    ?actor as:name ?name .
-    ?actor as:preferredUsername ?username .
-    ?actor voc:hasServerRole ?role .
-    ?actor vcard:email ?email .
+    {actor} as:name {name} .
+    {actor} as:preferredUsername {username} .
+    {actor} voc:hasServerRole {role} .
+    {actor} vcard:email {email} .
 }"""
-insert_user_query = sparql.prepareUpdate(insert_user_query, initNs=NAMESPACES)
 
 
 class AdminUsersEndpoint(HTTPEndpoint):
@@ -144,15 +143,31 @@ class AdminUserEndpoint(HTTPEndpoint):
 
             with request.state.graph as graph:
                 userdata = {
-                    "actor": actor,
-                    "username": username,
-                    "name": name,
-                    "email": email,
-                    "role": role,
+                    "actor": rdflib.URIRef(actor),
+                    "username": rdflib.Literal(username),
+                    "name": rdflib.Literal(name),
+                    "email": rdflib.Literal(email),
+                    "role": rdflib.Literal(role),
                 }
                 print(f"updating user: {userdata}")
+                insert_user_query = """
+                PREFIX voc: <{voc_ns}>
+                PREFIX as: <{as_ns}>
+                PREFIX vcard: <{vcard_ns}>
 
-                print(insert_user_query.algebra)
+                INSERT DATA {{
+                    <{actor}> as:name '{name}' .
+                    <{actor}> as:preferredUsername '{username}' .
+                    <{actor}> voc:hasServerRole '{role}' .
+                    <{actor}> vcard:email 'mailto:{email}' .
+                }}""".format(
+                    voc_ns=VOC,
+                    as_ns=AS,
+                    vcard_ns=VCARD,
+                    **userdata,
+                )
+                print(insert_user_query)
+
                 graph.update(
                     insert_user_query,
                     initBindings=userdata,
