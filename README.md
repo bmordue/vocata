@@ -73,6 +73,7 @@ With an account on a Vocata server, a user gains access
 to the [Fediverse] with a chosen identity, and can then use
 any client to act with that identity.
 
+A semantic perspective on Vocata can be found at its [WikiData](https://www.wikidata.org/wiki/Q122526192) reference.
 
 ## Technical: What the Fediverse really is
 
