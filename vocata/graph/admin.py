@@ -2,12 +2,11 @@ import typing as t
 
 import rdflib
 from rdflib.plugins import sparql
-from ..graph.schema import VOC, AS, VCARD
+from ..graph.schema import VOC, AS
 
 NAMESPACES = {
     "as": AS,
     "voc": VOC,
-    "vcard": VCARD,
 }
 
 SP_GET_USERS = """
@@ -20,7 +19,7 @@ WHERE {
         ?actor voc:hasServerRole ?role
     } .
     OPTIONAL {
-        ?actor vcard:email ?email
+        ?actor voc:systemEmail ?systemEmail
     } .
     BIND (
         STRBEFORE(STRAFTER(str(?actor), '://'), '/') as ?localdomain
@@ -39,6 +38,10 @@ WHERE {
     BIND (CONCAT(
         ?webSchema,
         ?actorDomain) AS ?actorPrefix)
+    BIND(REPLACE(
+        ?systemEmail,
+        'mailto:',
+        '') as ?email)
 }
 """
 SP_USERS_QUERY = sparql.prepareQuery(SP_GET_USERS, initNs=NAMESPACES)
@@ -53,13 +56,17 @@ WHERE {
         ?actor voc:hasServerRole ?role
     } .
     OPTIONAL {
-        ?actor vcard:email ?email
+        ?actor voc:systemEmail ?systemEmail
     } .
     BIND (
         STRBEFORE(STRAFTER(str(?actor), '://'), '/') as ?localdomain
     )
     BIND ((?role = 'admin') as ?isadmin)
     BIND (?account AS ?username)
+    BIND(REPLACE(
+        ?systemEmail,
+        'mailto:',
+        '') as ?email)
 }
 """
 SP_USER_QUERY = sparql.prepareQuery(SP_GET_USER, initNs=NAMESPACES)
@@ -133,8 +140,7 @@ class ActivityPubAdminMixin:
             self.set((actor, VOC.hasServerRole, rdflib.Literal(role)))
 
         if email := kwargs.get("email"):
-            email = email.removeprefix("mailto:")
-            self.set((actor, VCARD.email, rdflib.Literal(f"mailto:{email}")))
+            self.set((actor, VOC.systemEmail, rdflib.Literal(f"mailto:{email}")))
 
     # prefix data
     def get_prefixes(self):

@@ -1,6 +1,6 @@
 import rdflib
 
-from vocata.graph.schema import VOC, VCARD
+from vocata.graph.schema import VOC
 
 
 def test_get_users(graph, client, get_actors, get_prefix):
@@ -10,7 +10,7 @@ def test_get_users(graph, client, get_actors, get_prefix):
     ):
         with graph:
             for i, a in enumerate(actors):
-                graph.set((a, VCARD.email, rdflib.Literal(f"mailto:pytest{i}@{domain}")))
+                graph.set((a, VOC.systemEmail, rdflib.Literal(f"mailto:pytest{i}@{domain}")))
                 graph.set((a, VOC.hasServerRole, rdflib.Literal("role")))
 
             # nouser = graph.get_user(username="doesntexist")
@@ -25,7 +25,7 @@ def test_get_users(graph, client, get_actors, get_prefix):
         assert str(user.role) == "role"
         assert str(user.username) == "pytest0"
         assert str(user.localdomain) == domain
-        assert str(user.email) == f"mailto:pytest0@{user.localdomain}"
+        assert str(user.email) == f"pytest0@{user.localdomain}"
 
         assert len(users) == 2
         for i, u in enumerate(users):
@@ -34,7 +34,7 @@ def test_get_users(graph, client, get_actors, get_prefix):
             assert str(u.role) == "role"
             assert str(u.username) == f"pytest{i}"
             assert str(u.localdomain) == domain
-            assert str(u.email) == f"mailto:pytest{i}@{u.localdomain}"
+            assert str(u.email) == f"pytest{i}@{u.localdomain}"
 
 
 def test_update_user(graph, client, get_actors, get_prefix):
@@ -52,7 +52,7 @@ def test_update_user(graph, client, get_actors, get_prefix):
             )
 
             user = graph.get_user(actor=actor)
-            assert str(user.email) == "mailto:foo"
+            assert str(user.email) == "foo"
             assert str(user.name) == "POWER USER"
             assert str(user.role) == "admin"
 

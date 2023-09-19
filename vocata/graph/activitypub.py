@@ -17,6 +17,7 @@ from .federation import ActivityPubFederationMixin
 from .fsck import GraphFsckMixin
 from .jsonld import JSONLDMixin
 from .prefix import ActivityPubPrefixMixin
+from .admin import ActivityPubAdminMixin
 from .schema import AS, RDF, VOC
 
 
@@ -30,6 +31,7 @@ class ActivityPubGraph(
     JSONLDMixin,
     ActivityPubFederationMixin,
     GraphFsckMixin,
+    ActivityPubAdminMixin,
 ):
     def __init__(
         self,

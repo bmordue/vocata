@@ -8,6 +8,7 @@
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @base <https://docs.vocata.one/information-schema> .
 
 <https://docs.vocata.one/information-schema> rdf:type owl:Ontology ;
@@ -52,6 +53,14 @@ The object IR MUST NOT have a path component, and it SHOULD be a Service actor."
          rdfs:range xsd:string ;
          rdfs:comment "Determines the role this Actor has on this Vocata server." ;
          rdfs:label "Has system role" .
+
+:systemEmail rdf:type owl:DatatypeProperty ;
+         rdf:type owl:FunctionalProperty ;
+         rdfs:domain <http://www.w3.org/ns/activitystreams#Actor> ;
+         rdfs:range xsd:string ;
+         rdfs:comment "The email this Actor has on this Vocata server." ;
+         rdfs:label "System Email" ;
+         owl:sameAs vcard:email .
 
 ###  https://docs.vocata.one/information-schema#processResult
 :processResult rdf:type owl:DatatypeProperty ;
