@@ -129,8 +129,8 @@ class ActivityPubAdminMixin:
         if username := kwargs.get("username"):
             self.set((actor, AS.preferredUsername, rdflib.Literal(username)))
 
-        role = kwargs.get("role", "")
-        self.set((actor, VOC.hasServerRole, rdflib.Literal(role)))
+        if role := kwargs.get("role"):
+            self.set((actor, VOC.hasServerRole, rdflib.Literal(role)))
 
         if email := kwargs.get("email"):
             email = email.removeprefix("mailto:")
