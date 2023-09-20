@@ -1,0 +1,32 @@
+<div class="card has-table">
+    <header class="card-header">
+        <p class="card-header-title">
+            <span class="icon"><i class="mdi mdi-view-list"></i></span>
+            Results
+
+        </p>
+        <span class="icon"><i class="mdi mdi-clock"></i></span>Query Time: {{ querytime }}
+    </header>
+    <div class="b-table has-pagination">
+        <div class="table-wrapper has-mobile-cards">
+            <table class="table is-fullwidth is-striped is-hoverable is-fullwidth">
+                <thead>
+                    <tr>
+                        {% for label in results[0].labels %}
+                        <th>{{ label }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        {% for label in row.labels %}
+                        <td data-label="{{ label }}">{{ row[label] }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: © 2023 Steve Ivy <steve@monkinetic.blog>
+#
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
 from functools import wraps
 from rdflib import URIRef
 
