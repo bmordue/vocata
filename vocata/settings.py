@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
+import os
 from pathlib import Path
 from dynaconf import Dynaconf
 from dynaconf.base import LazySettings
@@ -10,6 +11,8 @@ _DEFAULTS_FILE = Path(__file__).parent / "default_settings.toml"
 
 
 def get_settings(settings_files: str | list[str] = None, **overrides) -> LazySettings:
+    if env_settings := os.getenv("VOCATA_SETTINGS"):
+        settings_files = [env_settings]
     if settings_files is None:
         settings_files = ["/etc/vocata.toml", "/etc/vocata.d/*.toml"]
     elif isinstance(settings_files, str):
