@@ -16,9 +16,6 @@ LDP = Namespace(LDP_URI)
 SEC_URI = "https://w3id.org/security#"
 SEC = Namespace(SEC_URI)
 
-VCARD_URI = "http://www.w3.org/2006/vcard/ns#"
-VCARD = Namespace(VCARD_URI)
-
 # FIXME support intransitive activities
 # FIXME disover from a real schema
 ACTIVITY_TYPES = {
