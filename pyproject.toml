@@ -16,7 +16,7 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-rdflib = "7.2.0"
+rdflib = "7.0.0"
 rdflib-sqlalchemy = "^0.5.4"
 pyld = "^2.0.3"
 requests = "^2.28.2"
