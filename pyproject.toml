@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vocata"
-version = "0.2.1"
+version = "0.2.2"
 description = "Vocabulary Agnostic Transport Agent"
 authors = ["Dominik George <nik@naturalnet.de>"]
 license = "LGPL-3.0-or-later"
@@ -16,12 +16,11 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-# FIXME revert to stable release after 6.4.0
-rdflib = { git = "https://github.com/RDFLib/rdflib.git" }
+rdflib = "7.2.0"
 rdflib-sqlalchemy = "^0.5.4"
 pyld = "^2.0.3"
 requests = "^2.28.2"
-cryptography = "^40.0.1"
+cryptography = "^43.0.1"
 starlette = { version = "^0.26.1", optional = true }
 uvicorn = { version = "^0.21.1", optional = true }
 typer = {version = "^0.7.0", optional = true, extras = ["all"]}
