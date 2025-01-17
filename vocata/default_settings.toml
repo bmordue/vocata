@@ -3,7 +3,7 @@ level = "info"
 
 [graph.database]
 store = "SQLAlchemy"
-uri = "sqlite:///graph.db"
+uri = "sqlite:///var/lib/vocata/graph.db"
 
 [server]
 host = "127.0.0.1"

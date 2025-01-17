@@ -27,4 +27,7 @@ def get_settings(settings_files: str | list[str] = None, **overrides) -> LazySet
     for name, value in overrides.items():
         settings.set(name, value)
 
+    print("danger danger!")
+    print(settings.get("uri"))
+
     return settings
